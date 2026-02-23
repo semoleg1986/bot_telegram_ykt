@@ -5,7 +5,7 @@ from aiogram import Bot, Router, types
 from src.application import ProcessMessage
 from src.domain import Message, User
 
-from ..utils import extract_urls, is_admin, is_channel_member
+from ..utils import extract_urls, is_admin, is_channel_member, schedule_delete
 
 
 def register_message_handler(
@@ -54,10 +54,11 @@ def register_message_handler(
                     or f"https://t.me/{required_channel.lstrip('@')}"
                 )
                 try:
-                    await bot.send_message(
+                    sent = await bot.send_message(
                         message.chat.id,
                         "Чтобы писать в чате, подпишитесь на канал: " + link,
                     )
+                    schedule_delete(bot, sent)
                 except Exception:
                     pass
                 return
@@ -70,9 +71,10 @@ def register_message_handler(
                 else message.from_user.full_name
             )
             try:
-                await bot.send_message(
+                sent = await bot.send_message(
                     message.chat.id,
                     f"Предупреждение для {display}. Причина: Нарушение правил чата",
                 )
+                schedule_delete(bot, sent)
             except Exception:
                 pass

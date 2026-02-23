@@ -5,7 +5,7 @@ from aiogram.filters import Command
 
 from src.application import VpnIssuer
 
-from ..utils import is_admin, is_channel_member, split_args
+from ..utils import is_admin, is_channel_member, schedule_delete, split_args
 
 
 def register_vpn_handlers(
@@ -28,9 +28,10 @@ def register_vpn_handlers(
             in_chat = await is_channel_member(bot, required_chat, message.from_user.id)
             if not in_chat:
                 chat_link = f"https://t.me/{required_chat.lstrip('@')}"
-                await message.reply(
+                sent = await message.reply(
                     "VPN доступ только для участников чата: " + chat_link
                 )
+                schedule_delete(bot, sent)
                 return
         if required_channel and not admin:
             member = await is_channel_member(
@@ -41,10 +42,14 @@ def register_vpn_handlers(
                     required_channel_link
                     or f"https://t.me/{required_channel.lstrip('@')}"
                 )
-                await message.reply("Для получения VPN подпишитесь на канал: " + link)
+                sent = await message.reply(
+                    "Для получения VPN подпишитесь на канал: " + link
+                )
+                schedule_delete(bot, sent)
                 return
         access_key = await vpn_issuer.issue(message.from_user.id)
-        await message.reply(f"Ваш Outline ключ: {access_key}")
+        sent = await message.reply(f"Ваш Outline ключ: {access_key}")
+        schedule_delete(bot, sent)
 
     @router.message(Command("vpn_revoke"))
     async def on_vpn_revoke(message: types.Message) -> None:
@@ -56,15 +61,20 @@ def register_vpn_handlers(
             if not await is_admin(
                 bot, message.chat.id, message.from_user.id, admin_user_ids
             ):
-                await message.reply("Только администратор может отзывать чужие ключи.")
+                sent = await message.reply(
+                    "Только администратор может отзывать чужие ключи."
+                )
+                schedule_delete(bot, sent)
                 return
             try:
                 target_user_id = int(args[1])
             except ValueError:
-                await message.reply("Неверный user_id.")
+                sent = await message.reply("Неверный user_id.")
+                schedule_delete(bot, sent)
                 return
         await vpn_issuer.revoke(target_user_id)
-        await message.reply("Ключ отозван.")
+        sent = await message.reply("Ключ отозван.")
+        schedule_delete(bot, sent)
 
     @router.message(Command("vpn_stats"))
     async def on_vpn_stats(message: types.Message) -> None:
@@ -73,15 +83,19 @@ def register_vpn_handlers(
         if not await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         ):
-            await message.reply("Только администратор может смотреть статистику.")
+            sent = await message.reply(
+                "Только администратор может смотреть статистику."
+            )
+            schedule_delete(bot, sent)
             return
         stats = await vpn_issuer.stats()
-        await message.reply(
+        sent = await message.reply(
             f"VPN статистика:\\n"
             f"- всего ключей: {stats['total']}\\n"
             f"- активные: {stats['active']}\\n"
             f"- отозванные: {stats['revoked']}"
         )
+        schedule_delete(bot, sent)
 
     @router.message(Command("vpn_users"))
     async def on_vpn_users(message: types.Message) -> None:
@@ -90,10 +104,15 @@ def register_vpn_handlers(
         if not await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         ):
-            await message.reply("Только администратор может смотреть список.")
+            sent = await message.reply("Только администратор может смотреть список.")
+            schedule_delete(bot, sent)
             return
         users = await vpn_issuer.active_users(limit=200)
         if not users:
-            await message.reply("Активных пользователей нет.")
+            sent = await message.reply("Активных пользователей нет.")
+            schedule_delete(bot, sent)
             return
-        await message.reply("Активные пользователи:\\n" + "\\n".join(map(str, users)))
+        sent = await message.reply(
+            "Активные пользователи:\\n" + "\\n".join(map(str, users))
+        )
+        schedule_delete(bot, sent)

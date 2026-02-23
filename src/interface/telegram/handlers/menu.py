@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.application import PolicyStore, VpnIssuer
 
-from ..utils import format_policy_summary, is_admin, is_channel_member
+from ..utils import format_policy_summary, is_admin, is_channel_member, schedule_delete
 
 
 def _build_menu() -> InlineKeyboardMarkup:
@@ -47,7 +47,8 @@ def register_menu_handlers(
 ) -> None:
     @router.message(Command("menu"))
     async def on_menu(message: types.Message) -> None:
-        await message.reply("Меню управления:", reply_markup=_build_menu())
+        sent = await message.reply("Меню управления:", reply_markup=_build_menu())
+        schedule_delete(bot, sent)
 
     @router.callback_query()
     async def on_menu_callback(query: types.CallbackQuery) -> None:
@@ -72,14 +73,16 @@ def register_menu_handlers(
                 bot, query.message.chat.id, query.from_user.id, admin_user_ids
             )
             if not admin:
-                await query.message.reply(
+                sent = await query.message.reply(
                     "Только администратор может выполнять это действие."
                 )
+                schedule_delete(bot, sent)
                 return
 
         if data == "menu:stats":
             policy = await policy_store.get()
-            await query.message.reply(format_policy_summary(policy))
+            sent = await query.message.reply(format_policy_summary(policy))
+            schedule_delete(bot, sent)
             return
 
         if data == "menu:vpn":
@@ -94,9 +97,10 @@ def register_menu_handlers(
                 )
                 if not in_chat:
                     chat_link = f"https://t.me/{required_chat.lstrip('@')}"
-                    await query.message.reply(
+                    sent = await query.message.reply(
                         "VPN доступ только для участников чата: " + chat_link
                     )
+                    schedule_delete(bot, sent)
                     return
             if required_channel and not admin:
                 member = await is_channel_member(
@@ -107,26 +111,32 @@ def register_menu_handlers(
                         required_channel_link
                         or f"https://t.me/{required_channel.lstrip('@')}"
                     )
-                    await query.message.reply(
+                    sent = await query.message.reply(
                         "Для получения VPN подпишитесь на канал: " + link
                     )
+                    schedule_delete(bot, sent)
                     return
             access_key = await vpn_issuer.issue(query.from_user.id)
-            await query.message.reply(f"Ваш Outline ключ: {access_key}")
+            sent = await query.message.reply(f"Ваш Outline ключ: {access_key}")
+            schedule_delete(bot, sent)
             return
 
         if data == "menu:add_keyword":
-            await query.message.reply("Команда: /spam_add keyword <слово>")
+            sent = await query.message.reply("Команда: /spam_add keyword <слово>")
+            schedule_delete(bot, sent)
             return
 
         if data == "menu:remove_keyword":
-            await query.message.reply("Команда: /spam_remove keyword <слово>")
+            sent = await query.message.reply("Команда: /spam_remove keyword <слово>")
+            schedule_delete(bot, sent)
             return
 
         if data == "menu:add_domain":
-            await query.message.reply("Команда: /spam_add domain <домен>")
+            sent = await query.message.reply("Команда: /spam_add domain <домен>")
+            schedule_delete(bot, sent)
             return
 
         if data == "menu:remove_domain":
-            await query.message.reply("Команда: /spam_remove domain <домен>")
+            sent = await query.message.reply("Команда: /spam_remove domain <домен>")
+            schedule_delete(bot, sent)
             return

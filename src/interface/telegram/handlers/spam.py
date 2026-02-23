@@ -10,6 +10,7 @@ from ..utils import (
     apply_policy_remove,
     format_policy_summary,
     is_admin,
+    schedule_delete,
     split_args,
 )
 
@@ -27,10 +28,14 @@ def register_spam_handlers(
         if not await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         ):
-            await message.reply("Только администратор может смотреть статистику.")
+            sent = await message.reply(
+                "Только администратор может смотреть статистику."
+            )
+            schedule_delete(bot, sent)
             return
         policy = await policy_store.get()
-        await message.reply(format_policy_summary(policy))
+        sent = await message.reply(format_policy_summary(policy))
+        schedule_delete(bot, sent)
 
     @router.message(Command("spam_add"))
     async def on_spam_add(message: types.Message) -> None:
@@ -39,13 +44,15 @@ def register_spam_handlers(
         if not await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         ):
-            await message.reply("Только администратор может менять правила.")
+            sent = await message.reply("Только администратор может менять правила.")
+            schedule_delete(bot, sent)
             return
         args = split_args(message.text or "")
         if len(args) < 3:
-            await message.reply(
+            sent = await message.reply(
                 "Использование: /spam_add keyword <слово> | /spam_add domain <домен>"
             )
+            schedule_delete(bot, sent)
             return
         kind = args[1]
         value = args[2]
@@ -54,7 +61,8 @@ def register_spam_handlers(
             return apply_policy_add(policy, kind, value)
 
         updated = await policy_store.update(updater)
-        await message.reply("Обновлено. " + format_policy_summary(updated))
+        sent = await message.reply("Обновлено. " + format_policy_summary(updated))
+        schedule_delete(bot, sent)
 
     @router.message(Command("spam_remove"))
     async def on_spam_remove(message: types.Message) -> None:
@@ -63,14 +71,16 @@ def register_spam_handlers(
         if not await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         ):
-            await message.reply("Только администратор может менять правила.")
+            sent = await message.reply("Только администратор может менять правила.")
+            schedule_delete(bot, sent)
             return
         args = split_args(message.text or "")
         if len(args) < 3:
-            await message.reply(
+            sent = await message.reply(
                 "Использование: /spam_remove keyword <слово> | "
                 "/spam_remove domain <домен>"
             )
+            schedule_delete(bot, sent)
             return
         kind = args[1]
         value = args[2]
@@ -79,4 +89,5 @@ def register_spam_handlers(
             return apply_policy_remove(policy, kind, value)
 
         updated = await policy_store.update(updater)
-        await message.reply("Обновлено. " + format_policy_summary(updated))
+        sent = await message.reply("Обновлено. " + format_policy_summary(updated))
+        schedule_delete(bot, sent)

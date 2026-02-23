@@ -3,7 +3,7 @@ from __future__ import annotations
 from aiogram import Bot, Router, types
 from aiogram.filters import Command
 
-from ..utils import is_admin
+from ..utils import is_admin, schedule_delete
 
 
 def register_meta_handlers(router: Router, bot: Bot, admin_user_ids: set[int]) -> None:
@@ -14,16 +14,17 @@ def register_meta_handlers(router: Router, bot: Bot, admin_user_ids: set[int]) -
         admin = await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         )
-        await message.reply(
+        sent = await message.reply(
             (
                 f"user_id={message.from_user.id}, "
                 f"chat_id={message.chat.id}, admin={admin}"
             )
         )
+        schedule_delete(bot, sent)
 
     @router.message(Command("help"))
     async def on_help(message: types.Message) -> None:
-        await message.reply(
+        sent = await message.reply(
             "Команды:\n"
             "/menu — меню с кнопками\n"
             "/spam_add keyword <слово>\n"
@@ -38,3 +39,4 @@ def register_meta_handlers(router: Router, bot: Bot, admin_user_ids: set[int]) -
             "/vpn_users\n"
             "/whoami"
         )
+        schedule_delete(bot, sent)

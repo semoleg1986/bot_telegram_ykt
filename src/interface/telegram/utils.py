@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import Any, Iterable
 
@@ -110,3 +111,20 @@ def apply_policy_remove(policy: Policy, kind: str, value: str) -> Policy:
             repeat_threshold=policy.repeat_threshold,
         ).normalized()
     return policy
+
+
+def schedule_delete(bot: Any, message: Any, delay: int = 10) -> None:
+    if not message or not getattr(message, "chat", None):
+        return
+    chat_type = getattr(message.chat, "type", "")
+    if chat_type not in {"group", "supergroup"}:
+        return
+
+    async def _delete() -> None:
+        await asyncio.sleep(delay)
+        try:
+            await bot.delete_message(message.chat.id, message.message_id)
+        except Exception:
+            pass
+
+    asyncio.create_task(_delete())
