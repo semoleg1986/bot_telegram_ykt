@@ -30,6 +30,22 @@ lint: ## Проверка стиля и типов (flake8 + mypy)
 check: format lint test ## Полная проверка качества кода
 
 # ========================
+# Docker
+# ========================
+
+docker-build: ## Собрать docker-образ
+	docker build -t bot_telegram_ykt .
+
+docker-up: ## Запустить через docker compose
+	docker compose up -d --build
+
+docker-down: ## Остановить docker compose
+	docker compose down
+
+docker-logs: ## Показать логи контейнера
+	docker compose logs -f
+
+# ========================
 # Pre-commit
 # ========================
 

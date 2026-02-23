@@ -13,6 +13,10 @@
    - `ADMIN_CHAT_ID` (опционально, куда слать уведомления)
    - `ADMIN_USER_IDS` (опционально, user_id админов через запятую)
    - `DB_PATH` (опционально, путь к SQLite файлу, по умолчанию `data/bot.sqlite3`)
+   - `REQUIRED_CHANNEL` (опционально, канал для обязательной подписки, например `@myyakutsk_info`)
+   - `REQUIRED_CHANNEL_LINK` (опционально, ссылка для инструкции, например `https://t.me/myyakutsk_info`)
+   - `OUTLINE_API_URL` (опционально, `apiUrl` из установщика Outline)
+   - `OUTLINE_CERT_SHA256` (опционально, `certSha256` из установщика Outline)
    - `SPAM_KEYWORDS` (опционально, список через запятую)
    - `SPAM_DOMAINS` (опционально, blacklist доменов через запятую)
    - `ALLOW_DOMAINS` (опционально, whitelist доменов через запятую)
@@ -32,4 +36,6 @@
 - `/spam_remove domain <домен>` — удалить домен
 - `/spam_stats` — показать текущую политику
 - `/vpn` — получить Outline ключ (пока заглушка)
+- `/vpn_revoke` — отозвать свой ключ
+- `/vpn_revoke <user_id>` — отозвать ключ пользователя (только админ)
 - `/menu` — показать меню с кнопками

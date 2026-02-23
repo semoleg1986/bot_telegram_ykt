@@ -35,6 +35,14 @@ async def is_admin(
     return member.status in {"administrator", "creator"}
 
 
+async def is_channel_member(bot: Any, channel: str, user_id: int) -> bool:
+    try:
+        member = await bot.get_chat_member(channel, user_id)
+    except Exception:
+        return False
+    return member.status in {"member", "administrator", "creator"}
+
+
 def split_args(text: str) -> list[str]:
     if not text:
         return []

@@ -18,11 +18,28 @@ def build_router(
     policy_store: PolicyStore,
     vpn_issuer: VpnIssuer,
     admin_user_ids: set[int],
+    required_channel: str | None = None,
+    required_channel_link: str | None = None,
 ) -> Router:
     router = Router()
     register_spam_handlers(router, bot, policy_store, admin_user_ids)
-    register_vpn_handlers(router, vpn_issuer)
+    register_vpn_handlers(
+        router,
+        bot,
+        vpn_issuer,
+        admin_user_ids,
+        required_channel=required_channel,
+        required_channel_link=required_channel_link,
+    )
     register_meta_handlers(router, bot, admin_user_ids)
     register_menu_handlers(router, bot, policy_store, vpn_issuer, admin_user_ids)
-    register_message_handler(router, bot, use_case, context_provider, admin_user_ids)
+    register_message_handler(
+        router,
+        bot,
+        use_case,
+        context_provider,
+        admin_user_ids,
+        required_channel=required_channel,
+        required_channel_link=required_channel_link,
+    )
     return router

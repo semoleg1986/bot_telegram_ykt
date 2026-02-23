@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.git
+.gitignore
+.env
+data/
+
+# tests and dev
+pytest.ini
+mypy.ini
+requirements.in

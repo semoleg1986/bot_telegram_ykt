@@ -13,6 +13,10 @@ def main() -> None:
         admin_chat_id=settings.admin_chat_id,
         admin_user_ids=settings.admin_user_ids,
         db_path=settings.db_path,
+        required_channel=settings.required_channel,
+        required_channel_link=settings.required_channel_link,
+        outline_api_url=settings.outline_api_url,
+        outline_cert_sha256=settings.outline_cert_sha256,
     )
 
 

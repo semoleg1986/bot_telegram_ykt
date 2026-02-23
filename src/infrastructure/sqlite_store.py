@@ -15,6 +15,7 @@ from src.application import (
     VpnIssuer,
 )
 from src.domain import Policy
+from src.infrastructure.outline_client import OutlineClient
 
 
 def _split_csv(raw: str) -> tuple[str, ...]:
@@ -76,11 +77,18 @@ class SQLiteDatabase:
                 CREATE TABLE IF NOT EXISTS vpn_keys (
                     user_id INTEGER PRIMARY KEY,
                     access_key TEXT NOT NULL,
+                    outline_key_id TEXT,
                     created_at INTEGER NOT NULL,
                     revoked_at INTEGER
                 );
                 """
             )
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(vpn_keys)").fetchall()
+            }
+            if "outline_key_id" not in columns:
+                conn.execute("ALTER TABLE vpn_keys ADD COLUMN outline_key_id TEXT")
             conn.commit()
         finally:
             conn.close()
@@ -254,8 +262,10 @@ class SQLiteVpnIssuer(VpnIssuer):
             access_key = f"OUTLINE_ACCESS_KEY_FOR_{user_id}"
             conn.execute(
                 """
-                INSERT INTO vpn_keys(user_id, access_key, created_at, revoked_at)
-                VALUES(?, ?, ?, NULL)
+                INSERT INTO vpn_keys(
+                    user_id, access_key, outline_key_id, created_at, revoked_at
+                )
+                VALUES(?, ?, NULL, ?, NULL)
                 """,
                 (user_id, access_key, int(time.time())),
             )
@@ -267,6 +277,67 @@ class SQLiteVpnIssuer(VpnIssuer):
     async def revoke(self, user_id: int) -> None:
         conn = self._db.connect()
         try:
+            conn.execute(
+                "UPDATE vpn_keys SET revoked_at=? WHERE user_id=?",
+                (int(time.time()), user_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+
+class OutlineVpnIssuer(VpnIssuer):
+    def __init__(self, db: SQLiteDatabase, client: OutlineClient) -> None:
+        self._db = db
+        self._db.ensure_schema()
+        self._client = client
+
+    async def issue(self, user_id: int) -> str:
+        conn = self._db.connect()
+        try:
+            row = conn.execute(
+                """
+                SELECT access_key, outline_key_id FROM vpn_keys
+                WHERE user_id=? AND revoked_at IS NULL
+                """,
+                (user_id,),
+            ).fetchone()
+            if row and row["access_key"]:
+                return row["access_key"]
+
+            response = self._client.create_key(name=str(user_id))
+            access_key = response.get("accessUrl") or response.get("accessKey")
+            outline_key_id = str(response.get("id"))
+            if not access_key or outline_key_id == "None":
+                raise RuntimeError("Outline API did not return access key")
+
+            conn.execute(
+                """
+                INSERT INTO vpn_keys(
+                    user_id, access_key, outline_key_id, created_at, revoked_at
+                )
+                VALUES(?, ?, ?, ?, NULL)
+                """,
+                (user_id, access_key, outline_key_id, int(time.time())),
+            )
+            conn.commit()
+            return access_key
+        finally:
+            conn.close()
+
+    async def revoke(self, user_id: int) -> None:
+        conn = self._db.connect()
+        try:
+            row = conn.execute(
+                """
+                SELECT outline_key_id FROM vpn_keys
+                WHERE user_id=? AND revoked_at IS NULL
+                """,
+                (user_id,),
+            ).fetchone()
+            outline_key_id = row["outline_key_id"] if row else None
+            if outline_key_id:
+                self._client.delete_key(outline_key_id)
             conn.execute(
                 "UPDATE vpn_keys SET revoked_at=? WHERE user_id=?",
                 (int(time.time()), user_id),

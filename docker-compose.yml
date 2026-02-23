@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    container_name: bot_telegram_ykt
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data

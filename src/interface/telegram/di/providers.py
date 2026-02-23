@@ -10,7 +10,9 @@ from src.infrastructure import (
     InMemoryPolicyStore,
     StubVpnIssuer,
 )
+from src.infrastructure.outline_client import OutlineClient
 from src.infrastructure.sqlite_store import (
+    OutlineVpnIssuer,
     SQLiteContextProvider,
     SQLiteDatabase,
     SQLiteDecisionLogger,
@@ -25,13 +27,21 @@ def build_dependencies(
     policy: Policy,
     admin_chat_id: int | None = None,
     db_path: str | None = None,
+    outline_api_url: str | None = None,
+    outline_cert_sha256: str | None = None,
 ) -> tuple[ProcessMessage, ContextProvider, PolicyStore, VpnIssuer]:
     if db_path:
         database = SQLiteDatabase(db_path)
         context_provider = SQLiteContextProvider(database)
         logger = SQLiteDecisionLogger(database)
         policy_store = SQLitePolicyStore(database, initial_policy=policy.normalized())
-        vpn_issuer = SQLiteVpnIssuer(database)
+        if outline_api_url:
+            client = OutlineClient(
+                api_url=outline_api_url, cert_sha256=outline_cert_sha256
+            )
+            vpn_issuer = OutlineVpnIssuer(database, client)
+        else:
+            vpn_issuer = SQLiteVpnIssuer(database)
     else:
         context_provider = InMemoryContextProvider()
         logger = InMemoryDecisionLogger()
