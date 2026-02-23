@@ -8,3 +8,4 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/app/data
+    network_mode: "host"
