@@ -27,7 +27,10 @@ def register_vpn_handlers(
         if required_chat and not admin:
             in_chat = await is_channel_member(bot, required_chat, message.from_user.id)
             if not in_chat:
-                await message.reply("VPN доступ только для участников чата.")
+                chat_link = f"https://t.me/{required_chat.lstrip('@')}"
+                await message.reply(
+                    "VPN доступ только для участников чата: " + chat_link
+                )
                 return
         if required_channel and not admin:
             member = await is_channel_member(

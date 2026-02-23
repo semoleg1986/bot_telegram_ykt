@@ -93,7 +93,10 @@ def register_menu_handlers(
                     bot, required_chat, query.from_user.id
                 )
                 if not in_chat:
-                    await query.message.reply("VPN доступ только для участников чата.")
+                    chat_link = f"https://t.me/{required_chat.lstrip('@')}"
+                    await query.message.reply(
+                        "VPN доступ только для участников чата: " + chat_link
+                    )
                     return
             if required_channel and not admin:
                 member = await is_channel_member(
