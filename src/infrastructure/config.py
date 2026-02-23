@@ -29,6 +29,7 @@ class Settings:
     token: str
     admin_chat_id: int | None
     admin_user_ids: tuple[int, ...]
+    db_path: str
     keyword_list: tuple[str, ...]
     domain_blacklist: tuple[str, ...]
     domain_whitelist: tuple[str, ...]
@@ -47,6 +48,7 @@ def load_settings() -> Settings:
         token=token,
         admin_chat_id=admin_chat_id,
         admin_user_ids=_split_int_list(os.getenv("ADMIN_USER_IDS")),
+        db_path=os.getenv("DB_PATH", "data/bot.sqlite3"),
         keyword_list=_split_list(os.getenv("SPAM_KEYWORDS")),
         domain_blacklist=_split_list(os.getenv("SPAM_DOMAINS")),
         domain_whitelist=_split_list(os.getenv("ALLOW_DOMAINS")),

@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable
-
-from aiogram import Bot, types
+from typing import Any, Iterable
 
 from src.domain import Policy
 
 _URL_RE = re.compile(r"https?://\\S+")
 
 
-def extract_urls(
-    text: str | None, entities: Iterable[types.MessageEntity] | None
-) -> list[str]:
+def extract_urls(text: str | None, entities: Iterable[Any] | None) -> list[str]:
     if not text:
         return []
     urls: list[str] = []
@@ -28,7 +24,7 @@ def extract_urls(
 
 
 async def is_admin(
-    bot: Bot, chat_id: int, user_id: int, admin_user_ids: set[int]
+    bot: Any, chat_id: int, user_id: int, admin_user_ids: set[int]
 ) -> bool:
     if user_id in admin_user_ids:
         return True

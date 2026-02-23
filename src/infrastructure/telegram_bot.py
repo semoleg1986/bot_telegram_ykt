@@ -14,9 +14,10 @@ def build_dispatcher(
     policy: Policy,
     admin_chat_id: int | None = None,
     admin_user_ids: tuple[int, ...] = (),
+    db_path: str | None = None,
 ) -> Dispatcher:
     use_case, context_provider, policy_store, vpn_issuer = build_dependencies(
-        bot=bot, policy=policy, admin_chat_id=admin_chat_id
+        bot=bot, policy=policy, admin_chat_id=admin_chat_id, db_path=db_path
     )
     router = build_router(
         use_case=use_case,
@@ -36,6 +37,7 @@ async def run_bot(
     policy: Policy,
     admin_chat_id: int | None = None,
     admin_user_ids: tuple[int, ...] = (),
+    db_path: str | None = None,
 ) -> None:
     bot = Bot(token=token)
     dispatcher = build_dispatcher(
@@ -43,6 +45,7 @@ async def run_bot(
         policy=policy,
         admin_chat_id=admin_chat_id,
         admin_user_ids=admin_user_ids,
+        db_path=db_path,
     )
 
     await dispatcher.start_polling(bot)
@@ -53,9 +56,14 @@ def run_bot_sync(
     policy: Policy,
     admin_chat_id: int | None = None,
     admin_user_ids: tuple[int, ...] = (),
+    db_path: str | None = None,
 ) -> None:
     asyncio.run(
         run_bot(
-            token, policy, admin_chat_id=admin_chat_id, admin_user_ids=admin_user_ids
+            token,
+            policy,
+            admin_chat_id=admin_chat_id,
+            admin_user_ids=admin_user_ids,
+            db_path=db_path,
         )
     )

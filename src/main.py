@@ -12,6 +12,7 @@ def main() -> None:
         policy=policy,
         admin_chat_id=settings.admin_chat_id,
         admin_user_ids=settings.admin_user_ids,
+        db_path=settings.db_path,
     )
 
 

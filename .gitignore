@@ -10,6 +10,7 @@ dist/
 build/
 .pytest_cache/
 *.sqlite3
+data/
 
 # IDE and OS
 .idea/

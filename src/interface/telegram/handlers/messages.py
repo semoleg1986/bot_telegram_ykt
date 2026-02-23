@@ -38,4 +38,13 @@ def register_message_handler(
         )
         user = User(user_id=message.from_user.id, is_admin=admin)
 
-        await use_case.execute(domain_message, user)
+        result = await use_case.execute(domain_message, user)
+        if result.decision == "deleted":
+            display = (
+                f"@{message.from_user.username}"
+                if message.from_user.username
+                else message.from_user.full_name
+            )
+            await message.reply(
+                f"Предупреждение для {display}. Причина: Нарушение правил чата"
+            )
