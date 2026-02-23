@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.application import PolicyStore, VpnIssuer
 
-from ..utils import format_policy_summary, is_admin
+from ..utils import format_policy_summary, is_admin, is_channel_member
 
 
 def _build_menu() -> InlineKeyboardMarkup:
@@ -41,6 +41,9 @@ def register_menu_handlers(
     policy_store: PolicyStore,
     vpn_issuer: VpnIssuer,
     admin_user_ids: set[int],
+    required_channel: str | None = None,
+    required_channel_link: str | None = None,
+    required_chat: str | None = None,
 ) -> None:
     @router.message(Command("menu"))
     async def on_menu(message: types.Message) -> None:
@@ -82,6 +85,29 @@ def register_menu_handlers(
         if data == "menu:vpn":
             if not query.from_user:
                 return
+            admin = await is_admin(
+                bot, query.message.chat.id, query.from_user.id, admin_user_ids
+            )
+            if required_chat and not admin:
+                in_chat = await is_channel_member(
+                    bot, required_chat, query.from_user.id
+                )
+                if not in_chat:
+                    await query.message.reply("VPN доступ только для участников чата.")
+                    return
+            if required_channel and not admin:
+                member = await is_channel_member(
+                    bot, required_channel, query.from_user.id
+                )
+                if not member:
+                    link = (
+                        required_channel_link
+                        or f"https://t.me/{required_channel.lstrip('@')}"
+                    )
+                    await query.message.reply(
+                        "Для получения VPN подпишитесь на канал: " + link
+                    )
+                    return
             access_key = await vpn_issuer.issue(query.from_user.id)
             await query.message.reply(f"Ваш Outline ключ: {access_key}")
             return

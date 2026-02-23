@@ -34,7 +34,16 @@ def build_router(
         required_chat=required_chat,
     )
     register_meta_handlers(router, bot, admin_user_ids)
-    register_menu_handlers(router, bot, policy_store, vpn_issuer, admin_user_ids)
+    register_menu_handlers(
+        router,
+        bot,
+        policy_store,
+        vpn_issuer,
+        admin_user_ids,
+        required_channel=required_channel,
+        required_channel_link=required_channel_link,
+        required_chat=required_chat,
+    )
     register_message_handler(
         router,
         bot,
