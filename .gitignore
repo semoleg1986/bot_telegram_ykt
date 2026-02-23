@@ -17,3 +17,6 @@ build/
 .DS_Store
 .env
 .copy.env
+
+# Бмзнес правила
+docs/
