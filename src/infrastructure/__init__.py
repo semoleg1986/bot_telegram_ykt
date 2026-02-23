@@ -5,7 +5,6 @@ from .in_memory import (
     InMemoryPolicyStore,
     StubVpnIssuer,
 )
-from .telegram_bot import build_dispatcher, run_bot, run_bot_sync
 
 __all__ = [
     "InMemoryContextProvider",
@@ -13,7 +12,4 @@ __all__ = [
     "InMemoryMessageAction",
     "InMemoryPolicyStore",
     "StubVpnIssuer",
-    "build_dispatcher",
-    "run_bot",
-    "run_bot_sync",
 ]
