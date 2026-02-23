@@ -77,6 +77,7 @@ class SQLiteDatabase:
                 for row in conn.execute("PRAGMA table_info(vpn_keys)").fetchall()
             }
             if "id" not in columns:
+                conn.execute("DROP TABLE IF EXISTS vpn_keys_new")
                 conn.execute(
                     """
                     CREATE TABLE vpn_keys_new (
