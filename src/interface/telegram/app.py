@@ -20,6 +20,7 @@ def build_router(
     admin_user_ids: set[int],
     required_channel: str | None = None,
     required_channel_link: str | None = None,
+    required_chat: str | None = None,
 ) -> Router:
     router = Router()
     register_spam_handlers(router, bot, policy_store, admin_user_ids)
@@ -30,6 +31,7 @@ def build_router(
         admin_user_ids,
         required_channel=required_channel,
         required_channel_link=required_channel_link,
+        required_chat=required_chat,
     )
     register_meta_handlers(router, bot, admin_user_ids)
     register_menu_handlers(router, bot, policy_store, vpn_issuer, admin_user_ids)

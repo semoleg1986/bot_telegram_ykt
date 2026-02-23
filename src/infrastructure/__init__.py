@@ -5,6 +5,14 @@ from .in_memory import (
     InMemoryPolicyStore,
     StubVpnIssuer,
 )
+from .persistence import (
+    OutlineVpnIssuer,
+    SQLiteContextProvider,
+    SQLiteDatabase,
+    SQLiteDecisionLogger,
+    SQLitePolicyStore,
+    SQLiteVpnIssuer,
+)
 
 __all__ = [
     "InMemoryContextProvider",
@@ -12,4 +20,10 @@ __all__ = [
     "InMemoryMessageAction",
     "InMemoryPolicyStore",
     "StubVpnIssuer",
+    "SQLiteDatabase",
+    "SQLiteContextProvider",
+    "SQLiteDecisionLogger",
+    "SQLitePolicyStore",
+    "SQLiteVpnIssuer",
+    "OutlineVpnIssuer",
 ]

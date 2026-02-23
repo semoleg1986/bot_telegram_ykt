@@ -15,6 +15,7 @@ def register_vpn_handlers(
     admin_user_ids: set[int],
     required_channel: str | None = None,
     required_channel_link: str | None = None,
+    required_chat: str | None = None,
 ) -> None:
     @router.message(Command("vpn"))
     async def on_vpn(message: types.Message) -> None:
@@ -23,6 +24,11 @@ def register_vpn_handlers(
         admin = await is_admin(
             bot, message.chat.id, message.from_user.id, admin_user_ids
         )
+        if required_chat and not admin:
+            in_chat = await is_channel_member(bot, required_chat, message.from_user.id)
+            if not in_chat:
+                await message.reply("VPN доступ только для участников чата.")
+                return
         if required_channel and not admin:
             member = await is_channel_member(
                 bot, required_channel, message.from_user.id
@@ -56,3 +62,35 @@ def register_vpn_handlers(
                 return
         await vpn_issuer.revoke(target_user_id)
         await message.reply("Ключ отозван.")
+
+    @router.message(Command("vpn_stats"))
+    async def on_vpn_stats(message: types.Message) -> None:
+        if not message.from_user:
+            return
+        if not await is_admin(
+            bot, message.chat.id, message.from_user.id, admin_user_ids
+        ):
+            await message.reply("Только администратор может смотреть статистику.")
+            return
+        stats = await vpn_issuer.stats()
+        await message.reply(
+            f"VPN статистика:\\n"
+            f"- всего ключей: {stats['total']}\\n"
+            f"- активные: {stats['active']}\\n"
+            f"- отозванные: {stats['revoked']}"
+        )
+
+    @router.message(Command("vpn_users"))
+    async def on_vpn_users(message: types.Message) -> None:
+        if not message.from_user:
+            return
+        if not await is_admin(
+            bot, message.chat.id, message.from_user.id, admin_user_ids
+        ):
+            await message.reply("Только администратор может смотреть список.")
+            return
+        users = await vpn_issuer.active_users(limit=200)
+        if not users:
+            await message.reply("Активных пользователей нет.")
+            return
+        await message.reply("Активные пользователи:\\n" + "\\n".join(map(str, users)))

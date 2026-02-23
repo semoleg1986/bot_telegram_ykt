@@ -17,6 +17,9 @@ def main() -> None:
         required_channel_link=settings.required_channel_link,
         outline_api_url=settings.outline_api_url,
         outline_cert_sha256=settings.outline_cert_sha256,
+        vpn_ttl_days=settings.vpn_ttl_days,
+        vpn_max_active_keys=settings.vpn_max_active_keys,
+        required_chat=settings.required_chat,
     )
 
 

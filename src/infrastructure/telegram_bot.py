@@ -19,6 +19,9 @@ def build_dispatcher(
     required_channel_link: str | None = None,
     outline_api_url: str | None = None,
     outline_cert_sha256: str | None = None,
+    vpn_ttl_days: int = 30,
+    vpn_max_active_keys: int = 2,
+    required_chat: str | None = None,
 ) -> Dispatcher:
     use_case, context_provider, policy_store, vpn_issuer = build_dependencies(
         bot=bot,
@@ -27,6 +30,8 @@ def build_dispatcher(
         db_path=db_path,
         outline_api_url=outline_api_url,
         outline_cert_sha256=outline_cert_sha256,
+        ttl_days=vpn_ttl_days,
+        max_active=vpn_max_active_keys,
     )
     router = build_router(
         use_case=use_case,
@@ -37,6 +42,7 @@ def build_dispatcher(
         admin_user_ids=set(admin_user_ids),
         required_channel=required_channel,
         required_channel_link=required_channel_link,
+        required_chat=required_chat,
     )
     dp = Dispatcher()
     dp.include_router(router)
@@ -53,6 +59,9 @@ async def run_bot(
     required_channel_link: str | None = None,
     outline_api_url: str | None = None,
     outline_cert_sha256: str | None = None,
+    vpn_ttl_days: int = 30,
+    vpn_max_active_keys: int = 2,
+    required_chat: str | None = None,
 ) -> None:
     bot = Bot(token=token)
     dispatcher = build_dispatcher(
@@ -65,6 +74,9 @@ async def run_bot(
         required_channel_link=required_channel_link,
         outline_api_url=outline_api_url,
         outline_cert_sha256=outline_cert_sha256,
+        vpn_ttl_days=vpn_ttl_days,
+        vpn_max_active_keys=vpn_max_active_keys,
+        required_chat=required_chat,
     )
 
     await dispatcher.start_polling(bot)
@@ -80,6 +92,9 @@ def run_bot_sync(
     required_channel_link: str | None = None,
     outline_api_url: str | None = None,
     outline_cert_sha256: str | None = None,
+    vpn_ttl_days: int = 30,
+    vpn_max_active_keys: int = 2,
+    required_chat: str | None = None,
 ) -> None:
     asyncio.run(
         run_bot(
@@ -92,5 +107,8 @@ def run_bot_sync(
             required_channel_link=required_channel_link,
             outline_api_url=outline_api_url,
             outline_cert_sha256=outline_cert_sha256,
+            vpn_ttl_days=vpn_ttl_days,
+            vpn_max_active_keys=vpn_max_active_keys,
+            required_chat=required_chat,
         )
     )

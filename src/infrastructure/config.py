@@ -32,8 +32,11 @@ class Settings:
     db_path: str
     required_channel: str | None
     required_channel_link: str | None
+    required_chat: str | None
     outline_api_url: str | None
     outline_cert_sha256: str | None
+    vpn_ttl_days: int
+    vpn_max_active_keys: int
     keyword_list: tuple[str, ...]
     domain_blacklist: tuple[str, ...]
     domain_whitelist: tuple[str, ...]
@@ -55,8 +58,11 @@ def load_settings() -> Settings:
         db_path=os.getenv("DB_PATH", "data/bot.sqlite3"),
         required_channel=os.getenv("REQUIRED_CHANNEL"),
         required_channel_link=os.getenv("REQUIRED_CHANNEL_LINK"),
+        required_chat=os.getenv("REQUIRED_CHAT"),
         outline_api_url=os.getenv("OUTLINE_API_URL"),
         outline_cert_sha256=os.getenv("OUTLINE_CERT_SHA256"),
+        vpn_ttl_days=int(os.getenv("VPN_TTL_DAYS", "30")),
+        vpn_max_active_keys=int(os.getenv("VPN_MAX_ACTIVE_KEYS", "2")),
         keyword_list=_split_list(os.getenv("SPAM_KEYWORDS")),
         domain_blacklist=_split_list(os.getenv("SPAM_DOMAINS")),
         domain_whitelist=_split_list(os.getenv("ALLOW_DOMAINS")),

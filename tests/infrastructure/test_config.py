@@ -16,8 +16,11 @@ def test_load_settings_parses_env(monkeypatch):
     monkeypatch.setenv("DB_PATH", "data/test.sqlite3")
     monkeypatch.setenv("REQUIRED_CHANNEL", "@myyakutsk_info")
     monkeypatch.setenv("REQUIRED_CHANNEL_LINK", "https://t.me/myyakutsk_info")
+    monkeypatch.setenv("REQUIRED_CHAT", "@yakutskbaraholka")
     monkeypatch.setenv("OUTLINE_API_URL", "https://example.com/abc")
     monkeypatch.setenv("OUTLINE_CERT_SHA256", "ABC123")
+    monkeypatch.setenv("VPN_TTL_DAYS", "30")
+    monkeypatch.setenv("VPN_MAX_ACTIVE_KEYS", "2")
     monkeypatch.setenv("SPAM_KEYWORDS", "one, two")
     monkeypatch.setenv("SPAM_DOMAINS", "bad.example")
     monkeypatch.setenv("ALLOW_DOMAINS", "good.example")
@@ -32,8 +35,11 @@ def test_load_settings_parses_env(monkeypatch):
     assert settings.db_path == "data/test.sqlite3"
     assert settings.required_channel == "@myyakutsk_info"
     assert settings.required_channel_link == "https://t.me/myyakutsk_info"
+    assert settings.required_chat == "@yakutskbaraholka"
     assert settings.outline_api_url == "https://example.com/abc"
     assert settings.outline_cert_sha256 == "ABC123"
+    assert settings.vpn_ttl_days == 30
+    assert settings.vpn_max_active_keys == 2
     assert settings.keyword_list == ("one", "two")
     assert settings.domain_blacklist == ("bad.example",)
     assert settings.domain_whitelist == ("good.example",)

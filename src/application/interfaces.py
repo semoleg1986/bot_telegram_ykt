@@ -49,3 +49,9 @@ class VpnIssuer(Protocol):
 
     async def revoke(self, user_id: int) -> None:
         raise NotImplementedError
+
+    async def stats(self) -> dict[str, int]:
+        raise NotImplementedError
+
+    async def active_users(self, limit: int = 100) -> list[int]:
+        raise NotImplementedError

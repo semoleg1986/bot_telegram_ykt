@@ -69,3 +69,10 @@ class StubVpnIssuer(VpnIssuer):
 
     async def revoke(self, user_id: int) -> None:
         _ = user_id
+
+    async def stats(self) -> dict[str, int]:
+        return {"total": 0, "active": 0, "revoked": 0}
+
+    async def active_users(self, limit: int = 100) -> list[int]:
+        _ = limit
+        return []
