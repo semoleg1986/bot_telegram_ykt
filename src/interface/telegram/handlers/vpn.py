@@ -90,9 +90,9 @@ def register_vpn_handlers(
             return
         stats = await vpn_issuer.stats()
         sent = await message.reply(
-            f"VPN статистика:\\n"
-            f"- всего ключей: {stats['total']}\\n"
-            f"- активные: {stats['active']}\\n"
+            "VPN статистика:\n"
+            f"- всего ключей: {stats['total']}\n"
+            f"- активные: {stats['active']}\n"
             f"- отозванные: {stats['revoked']}"
         )
         schedule_delete(bot, sent)
@@ -113,6 +113,6 @@ def register_vpn_handlers(
             schedule_delete(bot, sent)
             return
         sent = await message.reply(
-            "Активные пользователи:\\n" + "\\n".join(map(str, users))
+            "Активные пользователи:\n" + "\n".join(map(str, users))
         )
         schedule_delete(bot, sent)
