@@ -114,6 +114,10 @@ class SQLiteDatabase:
                     )
                 conn.execute("DROP TABLE vpn_keys")
                 conn.execute("ALTER TABLE vpn_keys_new RENAME TO vpn_keys")
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(vpn_keys)").fetchall()
+            }
             if "outline_key_id" not in columns:
                 conn.execute("ALTER TABLE vpn_keys ADD COLUMN outline_key_id TEXT")
             if "expires_at" not in columns:
