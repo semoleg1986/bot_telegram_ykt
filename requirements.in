@@ -1,5 +1,7 @@
 pytest
 
+aiogram
+
 black
 isort
 flake8
