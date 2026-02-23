@@ -9,12 +9,42 @@ from src.application import PolicyStore, VpnIssuer
 from ..utils import format_policy_summary, is_admin, is_channel_member, schedule_delete
 
 
-def _build_menu() -> InlineKeyboardMarkup:
+def _build_main_menu() -> InlineKeyboardMarkup:
     rows = [
         [
-            InlineKeyboardButton(text="Статистика", callback_data="menu:stats"),
-            InlineKeyboardButton(text="VPN ключ", callback_data="menu:vpn"),
+            InlineKeyboardButton(text="VPN", callback_data="menu:vpn_root"),
+            InlineKeyboardButton(text="Спам", callback_data="menu:spam_root"),
         ],
+        [
+            InlineKeyboardButton(text="Сервис", callback_data="menu:service_root"),
+        ],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _build_vpn_menu() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text="Получить ключ", callback_data="menu:vpn")],
+        [
+            InlineKeyboardButton(
+                text="Отозвать мой ключ", callback_data="menu:vpn_revoke_self"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Отозвать по ID", callback_data="menu:vpn_revoke_by_id"
+            )
+        ],
+        [InlineKeyboardButton(text="Статистика", callback_data="menu:vpn_stats")],
+        [InlineKeyboardButton(text="Пользователи", callback_data="menu:vpn_users")],
+        [InlineKeyboardButton(text="Назад", callback_data="menu:back")],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _build_spam_menu() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text="Статистика", callback_data="menu:stats")],
         [
             InlineKeyboardButton(
                 text="Добавить слово", callback_data="menu:add_keyword"
@@ -31,6 +61,16 @@ def _build_menu() -> InlineKeyboardMarkup:
                 text="Удалить домен", callback_data="menu:remove_domain"
             ),
         ],
+        [InlineKeyboardButton(text="Назад", callback_data="menu:back")],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _build_service_menu() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text="Help", callback_data="menu:help")],
+        [InlineKeyboardButton(text="Who am I", callback_data="menu:whoami")],
+        [InlineKeyboardButton(text="Назад", callback_data="menu:back")],
     ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -47,7 +87,7 @@ def register_menu_handlers(
 ) -> None:
     @router.message(Command("menu"))
     async def on_menu(message: types.Message) -> None:
-        sent = await message.reply("Меню управления:", reply_markup=_build_menu())
+        sent = await message.reply("Меню управления:", reply_markup=_build_main_menu())
         schedule_delete(bot, sent)
 
     @router.callback_query()
@@ -66,6 +106,9 @@ def register_menu_handlers(
             "menu:remove_keyword",
             "menu:add_domain",
             "menu:remove_domain",
+            "menu:vpn_stats",
+            "menu:vpn_users",
+            "menu:vpn_revoke_by_id",
         }:
             if not query.from_user:
                 return
@@ -78,6 +121,34 @@ def register_menu_handlers(
                 )
                 schedule_delete(bot, sent)
                 return
+
+        if data == "menu:vpn_root":
+            sent = await query.message.reply(
+                "VPN меню:", reply_markup=_build_vpn_menu()
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:spam_root":
+            sent = await query.message.reply(
+                "Спам меню:", reply_markup=_build_spam_menu()
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:service_root":
+            sent = await query.message.reply(
+                "Сервис меню:", reply_markup=_build_service_menu()
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:back":
+            sent = await query.message.reply(
+                "Меню управления:", reply_markup=_build_main_menu()
+            )
+            schedule_delete(bot, sent)
+            return
 
         if data == "menu:stats":
             policy = await policy_store.get()
@@ -118,6 +189,79 @@ def register_menu_handlers(
                     return
             access_key = await vpn_issuer.issue(query.from_user.id)
             sent = await query.message.reply(f"Ваш Outline ключ: {access_key}")
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:vpn_revoke_self":
+            if not query.from_user:
+                return
+            await vpn_issuer.revoke(query.from_user.id)
+            sent = await query.message.reply("Ключ отозван.")
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:vpn_revoke_by_id":
+            sent = await query.message.reply(
+                "Команда: /vpn_revoke <user_id> (только админ)"
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:vpn_stats":
+            stats = await vpn_issuer.stats()
+            sent = await query.message.reply(
+                "VPN статистика:\n"
+                f"- всего ключей: {stats['total']}\n"
+                f"- активные: {stats['active']}\n"
+                f"- отозванные: {stats['revoked']}"
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:vpn_users":
+            users = await vpn_issuer.active_users(limit=200)
+            if not users:
+                sent = await query.message.reply("Активных пользователей нет.")
+                schedule_delete(bot, sent)
+                return
+            sent = await query.message.reply(
+                "Активные пользователи:\n" + "\n".join(map(str, users))
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:help":
+            sent = await query.message.reply(
+                "Команды:\n"
+                "/menu — меню с кнопками\n"
+                "/spam_add keyword <слово>\n"
+                "/spam_add domain <домен>\n"
+                "/spam_remove keyword <слово>\n"
+                "/spam_remove domain <домен>\n"
+                "/spam_stats\n"
+                "/vpn\n"
+                "/vpn_revoke\n"
+                "/vpn_revoke <user_id>\n"
+                "/vpn_stats\n"
+                "/vpn_users\n"
+                "/whoami\n"
+                "/help"
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:whoami":
+            if not query.from_user:
+                return
+            admin = await is_admin(
+                bot, query.message.chat.id, query.from_user.id, admin_user_ids
+            )
+            sent = await query.message.reply(
+                (
+                    f"user_id={query.from_user.id}, "
+                    f"chat_id={query.message.chat.id}, admin={admin}"
+                )
+            )
             schedule_delete(bot, sent)
             return
 
