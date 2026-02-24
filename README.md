@@ -37,6 +37,22 @@
 ## Хранение
 По умолчанию используется SQLite (файл `data/bot.sqlite3`). Политики и логи сохраняются между перезапусками.
 
+## Outline (установка)
+1. Подключитесь к серверу по SSH.
+2. Запустите официальный инсталлятор:
+   - `sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh)"`
+3. Сохраните выведенные значения `apiUrl` и `certSha256`.
+4. Вставьте их в `.env`:
+   - `OUTLINE_API_URL=...`
+   - `OUTLINE_CERT_SHA256=...`
+5. Перезапустите бота/контейнер.
+
+## Как пользоваться VPN (для пользователей)
+1. Напишите боту `/vpn`.
+2. Получите ключ доступа.
+3. Установите приложение Outline на телефон/ПК.
+4. Импортируйте ключ и подключитесь.
+
 ## Команды бота
 - `/spam_add keyword <слово>` — добавить ключевое слово в blacklist
 - `/spam_add domain <домен>` — добавить домен в blacklist
