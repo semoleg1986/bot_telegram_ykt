@@ -59,23 +59,30 @@ def _extract_block(text: str, start: str, end: str) -> str:
 def _parse_bankiros_rates(raw_html: str) -> dict[str, dict[str, Any]]:
     text = _strip_tags(raw_html)
     block = _extract_block(text, "Курсы «", "ЦБ РФ")
+    if block == text:
+        block = _extract_block(text, "Курсы", "Лучшие курсы")
+    if block == text:
+        block = _extract_block(text, "Курсы", "Мосбиржа")
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR", "CNY"):
-        patterns = (
-            rf"{code}\\s+([0-9.,]+)\\s+([0-9.,]+)",
-            rf"{code}[^0-9]{0,40}([0-9.,]+)[^0-9]{0,40}([0-9.,]+)",
+        match = re.search(
+            rf"\\b{code}\\b\\s*([0-9.,]+)\\s*([0-9.,]+)",
+            block,
+            flags=re.IGNORECASE,
         )
-        found = None
-        for pattern in patterns:
-            match = re.search(pattern, block, flags=re.IGNORECASE)
-            if match:
-                found = (match.group(1), match.group(2))
-                break
-        if not found:
-            numbers = _find_numbers_after(block, rf"\\b{code}\\b")
-            found = _pick_buy_sell(numbers)
-        if found:
-            rates[code] = {"buy": found[0], "sell": found[1], "unit": 1}
+        if not match:
+            match = re.search(
+                rf"\\b{code}\\b[^0-9]{{0,60}}([0-9.,]+)[^0-9]{{0,60}}([0-9.,]+)",
+                block,
+                flags=re.IGNORECASE,
+            )
+        if match:
+            rates[code] = {"buy": match.group(1), "sell": match.group(2), "unit": 1}
+            continue
+        numbers = _find_numbers_after(block, rf"\\b{code}\\b")
+        picked = _pick_buy_sell(numbers)
+        if picked:
+            rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
     return rates
 
 
