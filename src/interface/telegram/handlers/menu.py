@@ -108,6 +108,7 @@ def register_menu_handlers(
         await query.answer()
         if not query.message:
             return
+        chat_id = query.message.chat.id
 
         if data in {
             "menu:stats",
@@ -127,43 +128,43 @@ def register_menu_handlers(
                 bot, query.message.chat.id, query.from_user.id, admin_user_ids
             )
             if not admin:
-                sent = await query.message.reply(
-                    "Только администратор может выполнять это действие."
+                sent = await bot.send_message(
+                    chat_id, "Только администратор может выполнять это действие."
                 )
                 schedule_delete(bot, sent)
                 return
 
         if data == "menu:vpn_root":
-            sent = await query.message.reply(
-                "VPN меню:", reply_markup=_build_vpn_menu()
+            sent = await bot.send_message(
+                chat_id, "VPN меню:", reply_markup=_build_vpn_menu()
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:spam_root":
-            sent = await query.message.reply(
-                "Спам меню:", reply_markup=_build_spam_menu()
+            sent = await bot.send_message(
+                chat_id, "Спам меню:", reply_markup=_build_spam_menu()
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:service_root":
-            sent = await query.message.reply(
-                "Сервис меню:", reply_markup=_build_service_menu()
+            sent = await bot.send_message(
+                chat_id, "Сервис меню:", reply_markup=_build_service_menu()
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:back":
-            sent = await query.message.reply(
-                "Меню управления:", reply_markup=_build_main_menu()
+            sent = await bot.send_message(
+                chat_id, "Меню управления:", reply_markup=_build_main_menu()
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:stats":
             policy = await policy_store.get()
-            sent = await query.message.reply(format_policy_summary(policy))
+            sent = await bot.send_message(chat_id, format_policy_summary(policy))
             schedule_delete(bot, sent)
             return
 
@@ -179,8 +180,8 @@ def register_menu_handlers(
                 )
                 if not in_chat:
                     chat_link = f"https://t.me/{required_chat.lstrip('@')}"
-                    sent = await query.message.reply(
-                        "VPN доступ только для участников чата: " + chat_link
+                    sent = await bot.send_message(
+                        chat_id, "VPN доступ только для участников чата: " + chat_link
                     )
                     schedule_delete(bot, sent)
                     return
@@ -193,19 +194,20 @@ def register_menu_handlers(
                         required_channel_link
                         or f"https://t.me/{required_channel.lstrip('@')}"
                     )
-                    sent = await query.message.reply(
-                        "Для получения VPN подпишитесь на канал: " + link
+                    sent = await bot.send_message(
+                        chat_id, "Для получения VPN подпишитесь на канал: " + link
                     )
                     schedule_delete(bot, sent)
                     return
             access_key = await vpn_issuer.issue(query.from_user.id)
-            sent = await query.message.reply(
+            sent = await bot.send_message(
+                chat_id,
                 "Ваш Outline ключ:\n"
                 f"{access_key}\n\n"
                 "Инструкция:\n"
                 "1) Установите Outline Client\n"
                 "2) Импортируйте ключ\n"
-                "3) Нажмите Connect"
+                "3) Нажмите Connect",
             )
             schedule_delete(bot, sent)
             return
@@ -214,24 +216,25 @@ def register_menu_handlers(
             if not query.from_user:
                 return
             await vpn_issuer.revoke(query.from_user.id)
-            sent = await query.message.reply("Ключ отозван.")
+            sent = await bot.send_message(chat_id, "Ключ отозван.")
             schedule_delete(bot, sent)
             return
 
         if data == "menu:vpn_revoke_by_id":
-            sent = await query.message.reply(
-                "Команда: /vpn_revoke <user_id> (только админ)"
+            sent = await bot.send_message(
+                chat_id, "Команда: /vpn_revoke <user_id> (только админ)"
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:vpn_stats":
             stats = await vpn_issuer.stats()
-            sent = await query.message.reply(
+            sent = await bot.send_message(
+                chat_id,
                 "VPN статистика:\n"
                 f"- всего ключей: {stats['total']}\n"
                 f"- активные: {stats['active']}\n"
-                f"- отозванные: {stats['revoked']}"
+                f"- отозванные: {stats['revoked']}",
             )
             schedule_delete(bot, sent)
             return
@@ -239,33 +242,34 @@ def register_menu_handlers(
         if data == "menu:vpn_users":
             users = await vpn_issuer.active_users(limit=200)
             if not users:
-                sent = await query.message.reply("Активных пользователей нет.")
+                sent = await bot.send_message(chat_id, "Активных пользователей нет.")
                 schedule_delete(bot, sent)
                 return
-            sent = await query.message.reply(
-                "Активные пользователи:\n" + "\n".join(map(str, users))
+            sent = await bot.send_message(
+                chat_id, "Активные пользователи:\n" + "\n".join(map(str, users))
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:rates":
             data_rates = await asyncio.to_thread(market.get_rates)
-            sent = await query.message.reply(
-                _format_rates_table(data_rates), parse_mode="Markdown"
+            sent = await bot.send_message(
+                chat_id, _format_rates_table(data_rates), parse_mode="Markdown"
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:fuel":
             data_fuel = await asyncio.to_thread(market.get_fuel)
-            sent = await query.message.reply(
-                _format_fuel_table(data_fuel), parse_mode="Markdown"
+            sent = await bot.send_message(
+                chat_id, _format_fuel_table(data_fuel), parse_mode="Markdown"
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:help":
-            sent = await query.message.reply(
+            sent = await bot.send_message(
+                chat_id,
                 "Команды:\n"
                 "/menu — меню с кнопками\n"
                 "/spam_add keyword <слово>\n"
@@ -279,7 +283,7 @@ def register_menu_handlers(
                 "/vpn_stats\n"
                 "/vpn_users\n"
                 "/whoami\n"
-                "/help"
+                "/help",
             )
             schedule_delete(bot, sent)
             return
@@ -290,31 +294,36 @@ def register_menu_handlers(
             admin = await is_admin(
                 bot, query.message.chat.id, query.from_user.id, admin_user_ids
             )
-            sent = await query.message.reply(
+            sent = await bot.send_message(
+                chat_id,
                 (
                     f"user_id={query.from_user.id}, "
                     f"chat_id={query.message.chat.id}, admin={admin}"
-                )
+                ),
             )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:add_keyword":
-            sent = await query.message.reply("Команда: /spam_add keyword <слово>")
+            sent = await bot.send_message(chat_id, "Команда: /spam_add keyword <слово>")
             schedule_delete(bot, sent)
             return
 
         if data == "menu:remove_keyword":
-            sent = await query.message.reply("Команда: /spam_remove keyword <слово>")
+            sent = await bot.send_message(
+                chat_id, "Команда: /spam_remove keyword <слово>"
+            )
             schedule_delete(bot, sent)
             return
 
         if data == "menu:add_domain":
-            sent = await query.message.reply("Команда: /spam_add domain <домен>")
+            sent = await bot.send_message(chat_id, "Команда: /spam_add domain <домен>")
             schedule_delete(bot, sent)
             return
 
         if data == "menu:remove_domain":
-            sent = await query.message.reply("Команда: /spam_remove domain <домен>")
+            sent = await bot.send_message(
+                chat_id, "Команда: /spam_remove domain <домен>"
+            )
             schedule_delete(bot, sent)
             return
