@@ -13,8 +13,11 @@ _NUM_RE = re.compile(r"\d+[.,]\d+")
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
-def _fetch_text(url: str, timeout: int = 10) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+def _fetch_text(url: str, timeout: int = 15) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
@@ -45,20 +48,46 @@ def _find_numbers_after(text: str, pattern: str, limit: int = 160) -> list[str]:
 def _parse_bankiros_rates(text: str) -> dict[str, dict[str, Any]]:
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR", "CNY"):
-        numbers = _find_numbers_after(text, rf"\\b{code}\\b")
-        picked = _pick_buy_sell(numbers)
-        if picked:
-            rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
+        patterns = (
+            rf'"code":"{code}".{{0,200}}?"buy":\\s*([0-9.,]+)'
+            rf'.{{0,80}}?"sell":\\s*([0-9.,]+)',
+            rf"{code}.{{0,160}}?(?:buy|purchase|purchaseRate)[^0-9]*"
+            rf"([0-9.,]+).{{0,80}}?(?:sell|sale|saleRate)[^0-9]*"
+            rf"([0-9.,]+)",
+        )
+        found = None
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                found = (match.group(1), match.group(2))
+                break
+        if not found:
+            numbers = _find_numbers_after(text, rf"\\b{code}\\b")
+            found = _pick_buy_sell(numbers)
+        if found:
+            rates[code] = {"buy": found[0], "sell": found[1], "unit": 1}
     return rates
 
 
 def _parse_aeb_rates(text: str) -> dict[str, dict[str, Any]]:
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR"):
-        numbers = _find_numbers_after(text, rf"\\b{code}\\b")
-        picked = _pick_buy_sell(numbers)
-        if picked:
-            rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
+        patterns = (
+            rf"{code}.{{0,120}}?(?:покуп|buy)[^0-9]*([0-9.,]+)"
+            rf".{{0,80}}?(?:прод|sell)[^0-9]*([0-9.,]+)",
+            rf"{code}.{{0,120}}?([0-9.,]+).{{0,40}}?([0-9.,]+)",
+        )
+        found = None
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                found = (match.group(1), match.group(2))
+                break
+        if not found:
+            numbers = _find_numbers_after(text, rf"\\b{code}\\b")
+            found = _pick_buy_sell(numbers)
+        if found:
+            rates[code] = {"buy": found[0], "sell": found[1], "unit": 1}
 
     cny_numbers = _find_numbers_after(text, r"\\bCNY\\b")
     picked = _pick_buy_sell(cny_numbers)
@@ -137,7 +166,8 @@ class MarketDataService:
         except Exception:
             result["banks"]["АЭБ"] = {}
 
-        self.cache.set("rates", result)
+        if any(result["banks"].get(bank) for bank in result["banks"]):
+            self.cache.set("rates", result)
         return result
 
     def get_fuel(self) -> dict[str, Any]:
@@ -164,5 +194,6 @@ class MarketDataService:
                 continue
         result["companies"]["Туймаада-Нефть"] = tuneft_prices
 
-        self.cache.set("fuel", result)
+        if any(result["companies"].get(company) for company in result["companies"]):
+            self.cache.set("fuel", result)
         return result
