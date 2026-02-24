@@ -20,11 +20,11 @@ def _format_rates_table(data: dict) -> str:
         eur = "—"
         cny = "—"
         if "USD" in rates:
-            usd = f"{rates['USD'][0]}/{rates['USD'][1]}"
+            usd = _format_rate_cell(rates["USD"])
         if "EUR" in rates:
-            eur = f"{rates['EUR'][0]}/{rates['EUR'][1]}"
+            eur = _format_rate_cell(rates["EUR"])
         if "CNY" in rates:
-            cny = f"{rates['CNY'][0]}/{rates['CNY'][1]}"
+            cny = _format_rate_cell(rates["CNY"])
         rows.append(f"{bank} | {usd} | {eur} | {cny}")
     return "```\n" + "\n".join(rows) + "\n```"
 
@@ -40,6 +40,20 @@ def _format_fuel_table(data: dict) -> str:
             f"{prices.get('AI-95', '—')} | {prices.get('DT', '—')}"
         )
     return "```\n" + "\n".join(rows) + "\n```"
+
+
+def _format_rate_cell(value: object) -> str:
+    if isinstance(value, dict):
+        buy = value.get("buy")
+        sell = value.get("sell")
+        unit = value.get("unit", 1)
+        if buy and sell:
+            suffix = "" if unit == 1 else f" (x{unit})"
+            return f"{buy}/{sell}{suffix}"
+        return "—"
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        return f"{value[0]}/{value[1]}"
+    return "—"
 
 
 def register_service_handlers(router: Router, market: MarketDataService) -> None:

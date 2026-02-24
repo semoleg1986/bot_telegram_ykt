@@ -20,43 +20,65 @@ def _fetch_text(url: str, timeout: int = 10) -> str:
 
 
 def _strip_tags(html: str) -> str:
-    return re.sub(r"\s+", " ", _TAG_RE.sub(" ", unescape(html))).strip()
+    cleaned = _TAG_RE.sub(" ", unescape(html))
+    cleaned = cleaned.replace("\xa0", " ")
+    return re.sub(r"\s+", " ", cleaned).strip()
 
 
-def _parse_bankiros_rates(text: str) -> dict[str, tuple[str, str]]:
-    rates: dict[str, tuple[str, str]] = {}
+def _pick_buy_sell(numbers: list[str]) -> tuple[str, str] | None:
+    if len(numbers) < 2:
+        return None
+    if len(numbers) >= 3:
+        return numbers[-2], numbers[-1]
+    return numbers[0], numbers[1]
+
+
+def _find_numbers_after(text: str, pattern: str, limit: int = 160) -> list[str]:
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    if not match:
+        return []
+    start = match.end()
+    chunk = text[start : start + limit]
+    return _NUM_RE.findall(chunk)
+
+
+def _parse_bankiros_rates(text: str) -> dict[str, dict[str, Any]]:
+    rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR", "CNY"):
-        pattern = rf"{code}\\s*\\|?\\s*(\\d+[.,]\\d+)\\s*\\|?\\s*(\\d+[.,]\\d+)"
-        match = re.search(pattern, text)
-        if match:
-            rates[code] = (match.group(1), match.group(2))
+        numbers = _find_numbers_after(text, rf"\\b{code}\\b")
+        picked = _pick_buy_sell(numbers)
+        if picked:
+            rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
     return rates
 
 
-def _parse_aeb_rates(text: str) -> dict[str, tuple[str, str]]:
-    rates: dict[str, tuple[str, str]] = {}
-    for code in ("USD", "EUR", "CNY"):
-        pattern = rf"{code}\\s*\\|?\\s*(\\d+[.,]\\d+)\\s*\\|?\\s*(\\d+[.,]\\d+)"
-        match = re.search(pattern, text)
-        if match:
-            rates[code] = (match.group(1), match.group(2))
+def _parse_aeb_rates(text: str) -> dict[str, dict[str, Any]]:
+    rates: dict[str, dict[str, Any]] = {}
+    for code in ("USD", "EUR"):
+        numbers = _find_numbers_after(text, rf"\\b{code}\\b")
+        picked = _pick_buy_sell(numbers)
+        if picked:
+            rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
+
+    cny_numbers = _find_numbers_after(text, r"\\bCNY\\b")
+    picked = _pick_buy_sell(cny_numbers)
+    if picked:
+        unit = 10 if re.search(r"\\b10\\s*CNY\\b", text, re.IGNORECASE) else 1
+        rates["CNY"] = {"buy": picked[0], "sell": picked[1], "unit": unit}
     return rates
 
 
 def _parse_aosngs_prices(text: str) -> dict[str, str]:
     prices: dict[str, str] = {}
-    for label, key in (("92", "AI-92"), ("95", "AI-95"), ("ДТ", "DT")):
-        match = re.search(
-            rf"\\b{label}\\b\\s*(\\d+[.,]\\d+)",
-            text,
-        )
-        if not match:
-            match = re.search(
-                rf"\\b{label}\\b\\s*(\\d+[.,]\\d+)\\s*₽",
-                text,
-            )
-        if match:
-            prices[key] = match.group(1)
+    patterns = (
+        (r"АИ-?92|\\b92\\b", "AI-92"),
+        (r"АИ-?95|\\b95\\b", "AI-95"),
+        (r"\\bДТ\\b|ДИЗ|DIESEL", "DT"),
+    )
+    for pattern, key in patterns:
+        numbers = _find_numbers_after(text, pattern, limit=80)
+        if numbers:
+            prices[key] = numbers[0]
     return prices
 
 
