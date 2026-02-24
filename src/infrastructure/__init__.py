@@ -12,6 +12,7 @@ from .persistence import (
     SQLiteDecisionLogger,
     SQLitePolicyStore,
     SQLiteVpnIssuer,
+    XrayVpnIssuer,
 )
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "SQLitePolicyStore",
     "SQLiteVpnIssuer",
     "OutlineVpnIssuer",
+    "XrayVpnIssuer",
 ]

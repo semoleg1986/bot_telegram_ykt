@@ -35,6 +35,17 @@ class Settings:
     required_chat: str | None
     outline_api_url: str | None
     outline_cert_sha256: str | None
+    xray_host: str | None
+    xray_port: int | None
+    xray_uuid: str | None
+    xray_public_key: str | None
+    xray_sni: str | None
+    xray_short_id: str | None
+    xray_profile_name: str
+    xray_fingerprint: str
+    xray_alpn: str
+    xray_flow: str
+    xray_path: str
     vpn_ttl_days: int
     vpn_max_active_keys: int
     sber_rates_url: str
@@ -66,6 +77,17 @@ def load_settings() -> Settings:
         required_chat=os.getenv("REQUIRED_CHAT"),
         outline_api_url=os.getenv("OUTLINE_API_URL"),
         outline_cert_sha256=os.getenv("OUTLINE_CERT_SHA256"),
+        xray_host=os.getenv("XRAY_HOST"),
+        xray_port=int(os.getenv("XRAY_PORT", "0")) or None,
+        xray_uuid=os.getenv("XRAY_UUID"),
+        xray_public_key=os.getenv("XRAY_PUBLIC_KEY"),
+        xray_sni=os.getenv("XRAY_SNI"),
+        xray_short_id=os.getenv("XRAY_SHORT_ID"),
+        xray_profile_name=os.getenv("XRAY_PROFILE_NAME", "Yakutsk VPN"),
+        xray_fingerprint=os.getenv("XRAY_FINGERPRINT", "chrome"),
+        xray_alpn=os.getenv("XRAY_ALPN", "h2"),
+        xray_flow=os.getenv("XRAY_FLOW", "xtls-rprx-vision"),
+        xray_path=os.getenv("XRAY_PATH", "/"),
         vpn_ttl_days=int(os.getenv("VPN_TTL_DAYS", "30")),
         vpn_max_active_keys=int(os.getenv("VPN_MAX_ACTIVE_KEYS", "2")),
         sber_rates_url=os.getenv(
