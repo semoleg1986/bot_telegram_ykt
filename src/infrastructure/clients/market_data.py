@@ -26,7 +26,7 @@ def _strip_tags(html: str) -> str:
 def _parse_bankiros_rates(text: str) -> dict[str, tuple[str, str]]:
     rates: dict[str, tuple[str, str]] = {}
     for code in ("USD", "EUR", "CNY"):
-        pattern = rf"{code}\\s+(\\d+[.,]\\d+)\\s+(\\d+[.,]\\d+)"
+        pattern = rf"{code}\\s*\\|?\\s*(\\d+[.,]\\d+)\\s*\\|?\\s*(\\d+[.,]\\d+)"
         match = re.search(pattern, text)
         if match:
             rates[code] = (match.group(1), match.group(2))
@@ -36,7 +36,7 @@ def _parse_bankiros_rates(text: str) -> dict[str, tuple[str, str]]:
 def _parse_aeb_rates(text: str) -> dict[str, tuple[str, str]]:
     rates: dict[str, tuple[str, str]] = {}
     for code in ("USD", "EUR", "CNY"):
-        pattern = rf"{code}\\s+(\\d+[.,]\\d+)\\s+(\\d+[.,]\\d+)"
+        pattern = rf"{code}\\s*\\|?\\s*(\\d+[.,]\\d+)\\s*\\|?\\s*(\\d+[.,]\\d+)"
         match = re.search(pattern, text)
         if match:
             rates[code] = (match.group(1), match.group(2))
@@ -46,7 +46,15 @@ def _parse_aeb_rates(text: str) -> dict[str, tuple[str, str]]:
 def _parse_aosngs_prices(text: str) -> dict[str, str]:
     prices: dict[str, str] = {}
     for label, key in (("92", "AI-92"), ("95", "AI-95"), ("ДТ", "DT")):
-        match = re.search(rf"\\b{label}\\b\\s*(\\d+[.,]\\d+)", text)
+        match = re.search(
+            rf"\\b{label}\\b\\s*(\\d+[.,]\\d+)",
+            text,
+        )
+        if not match:
+            match = re.search(
+                rf"\\b{label}\\b\\s*(\\d+[.,]\\d+)\\s*₽",
+                text,
+            )
         if match:
             prices[key] = match.group(1)
     return prices

@@ -199,7 +199,14 @@ def register_menu_handlers(
                     schedule_delete(bot, sent)
                     return
             access_key = await vpn_issuer.issue(query.from_user.id)
-            sent = await query.message.reply(f"Ваш Outline ключ: {access_key}")
+            sent = await query.message.reply(
+                "Ваш Outline ключ:\n"
+                f"{access_key}\n\n"
+                "Инструкция:\n"
+                "1) Установите Outline Client\n"
+                "2) Импортируйте ключ\n"
+                "3) Нажмите Connect"
+            )
             schedule_delete(bot, sent)
             return
 
