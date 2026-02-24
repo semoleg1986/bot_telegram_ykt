@@ -56,30 +56,41 @@ def _extract_block(text: str, start: str, end: str) -> str:
     return text[start_idx:end_idx]
 
 
+def _extract_block_raw(html: str, start: str, end: str) -> str:
+    lower = html.lower()
+    start_idx = lower.find(start.lower())
+    if start_idx == -1:
+        return html
+    end_idx = lower.find(end.lower(), start_idx)
+    if end_idx == -1:
+        return html[start_idx:]
+    return html[start_idx:end_idx]
+
+
 def _parse_bankiros_rates(raw_html: str) -> dict[str, dict[str, Any]]:
-    text = _strip_tags(raw_html)
-    block = _extract_block(text, "Курсы «", "ЦБ РФ")
-    if block == text:
-        block = _extract_block(text, "Курсы", "Лучшие курсы")
-    if block == text:
-        block = _extract_block(text, "Курсы", "Мосбиржа")
+    block_html = _extract_block_raw(raw_html, "Курсы", "ЦБ РФ")
+    if block_html == raw_html:
+        block_html = _extract_block_raw(raw_html, "Курсы", "Лучшие курсы")
+    if block_html == raw_html:
+        block_html = _extract_block_raw(raw_html, "Курсы", "Мосбиржа")
+    text = _strip_tags(block_html)
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR", "CNY"):
         match = re.search(
             rf"\\b{code}\\b\\s*([0-9.,]+)\\s*([0-9.,]+)",
-            block,
+            text,
             flags=re.IGNORECASE,
         )
         if not match:
             match = re.search(
                 rf"\\b{code}\\b[^0-9]{{0,60}}([0-9.,]+)[^0-9]{{0,60}}([0-9.,]+)",
-                block,
+                text,
                 flags=re.IGNORECASE,
             )
         if match:
             rates[code] = {"buy": match.group(1), "sell": match.group(2), "unit": 1}
             continue
-        numbers = _find_numbers_after(block, rf"\\b{code}\\b")
+        numbers = _find_numbers_after(text, rf"\\b{code}\\b")
         picked = _pick_buy_sell(numbers)
         if picked:
             rates[code] = {"buy": picked[0], "sell": picked[1], "unit": 1}
@@ -117,19 +128,27 @@ def _parse_aeb_rates(raw_html: str) -> dict[str, dict[str, Any]]:
 
 def _parse_aosngs_prices(raw_html: str) -> dict[str, str]:
     prices: dict[str, str] = {}
-    tag_patterns = (
-        (r"block__title\">\\s*92\\s*<", "AI-92"),
-        (r"block__title\">\\s*95\\s*<", "AI-95"),
-        (r"block__title\">\\s*ДТ\\s*<", "DT"),
-    )
-    for pattern, key in tag_patterns:
-        match = re.search(
-            pattern + r".{0,120}?block__price\">\\s*([0-9.,]+)",
+    title_iter = list(
+        re.finditer(
+            r"block__title\">\\s*([^<]+)",
             raw_html,
-            flags=re.IGNORECASE | re.DOTALL,
+            flags=re.IGNORECASE,
         )
-        if match:
-            prices[key] = match.group(1)
+    )
+    for match in title_iter:
+        title = match.group(1).strip()
+        if title not in {"92", "95", "ДТ"}:
+            continue
+        after = raw_html[match.end() : match.end() + 400]
+        price_match = re.search(
+            r"block__price\">\\s*([0-9.,]+)",
+            after,
+            flags=re.IGNORECASE,
+        )
+        if not price_match:
+            continue
+        key = "AI-92" if title == "92" else "AI-95" if title == "95" else "DT"
+        prices[key] = price_match.group(1)
 
     if prices:
         return prices
