@@ -45,31 +45,42 @@ def _find_numbers_after(text: str, pattern: str, limit: int = 160) -> list[str]:
     return _NUM_RE.findall(chunk)
 
 
-def _parse_bankiros_rates(text: str) -> dict[str, dict[str, Any]]:
+def _extract_block(text: str, start: str, end: str) -> str:
+    lower = text.lower()
+    start_idx = lower.find(start.lower())
+    if start_idx == -1:
+        return text
+    end_idx = lower.find(end.lower(), start_idx)
+    if end_idx == -1:
+        return text[start_idx:]
+    return text[start_idx:end_idx]
+
+
+def _parse_bankiros_rates(raw_html: str) -> dict[str, dict[str, Any]]:
+    text = _strip_tags(raw_html)
+    block = _extract_block(text, "Курсы «", "ЦБ РФ")
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR", "CNY"):
         patterns = (
-            rf'"code":"{code}".{{0,200}}?"buy":\\s*([0-9.,]+)'
-            rf'.{{0,80}}?"sell":\\s*([0-9.,]+)',
-            rf"{code}.{{0,160}}?(?:buy|purchase|purchaseRate)[^0-9]*"
-            rf"([0-9.,]+).{{0,80}}?(?:sell|sale|saleRate)[^0-9]*"
-            rf"([0-9.,]+)",
+            rf"{code}\\s+([0-9.,]+)\\s+([0-9.,]+)",
+            rf"{code}[^0-9]{0,40}([0-9.,]+)[^0-9]{0,40}([0-9.,]+)",
         )
         found = None
         for pattern in patterns:
-            match = re.search(pattern, text, flags=re.IGNORECASE)
+            match = re.search(pattern, block, flags=re.IGNORECASE)
             if match:
                 found = (match.group(1), match.group(2))
                 break
         if not found:
-            numbers = _find_numbers_after(text, rf"\\b{code}\\b")
+            numbers = _find_numbers_after(block, rf"\\b{code}\\b")
             found = _pick_buy_sell(numbers)
         if found:
             rates[code] = {"buy": found[0], "sell": found[1], "unit": 1}
     return rates
 
 
-def _parse_aeb_rates(text: str) -> dict[str, dict[str, Any]]:
+def _parse_aeb_rates(raw_html: str) -> dict[str, dict[str, Any]]:
+    text = _strip_tags(raw_html)
     rates: dict[str, dict[str, Any]] = {}
     for code in ("USD", "EUR"):
         patterns = (
@@ -97,8 +108,26 @@ def _parse_aeb_rates(text: str) -> dict[str, dict[str, Any]]:
     return rates
 
 
-def _parse_aosngs_prices(text: str) -> dict[str, str]:
+def _parse_aosngs_prices(raw_html: str) -> dict[str, str]:
     prices: dict[str, str] = {}
+    tag_patterns = (
+        (r"block__title\">\\s*92\\s*<", "AI-92"),
+        (r"block__title\">\\s*95\\s*<", "AI-95"),
+        (r"block__title\">\\s*ДТ\\s*<", "DT"),
+    )
+    for pattern, key in tag_patterns:
+        match = re.search(
+            pattern + r".{0,120}?block__price\">\\s*([0-9.,]+)",
+            raw_html,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if match:
+            prices[key] = match.group(1)
+
+    if prices:
+        return prices
+
+    text = _strip_tags(raw_html)
     patterns = (
         (r"АИ-?92|\\b92\\b", "AI-92"),
         (r"АИ-?95|\\b95\\b", "AI-95"),
@@ -151,18 +180,18 @@ class MarketDataService:
 
         result: dict[str, Any] = {"banks": {}}
         try:
-            sber_text = _strip_tags(_fetch_text(self.sber_url))
-            result["banks"]["Сбер"] = _parse_bankiros_rates(sber_text)
+            sber_html = _fetch_text(self.sber_url)
+            result["banks"]["Сбер"] = _parse_bankiros_rates(sber_html)
         except Exception:
             result["banks"]["Сбер"] = {}
         try:
-            vtb_text = _strip_tags(_fetch_text(self.vtb_url))
-            result["banks"]["ВТБ"] = _parse_bankiros_rates(vtb_text)
+            vtb_html = _fetch_text(self.vtb_url)
+            result["banks"]["ВТБ"] = _parse_bankiros_rates(vtb_html)
         except Exception:
             result["banks"]["ВТБ"] = {}
         try:
-            aeb_text = _strip_tags(_fetch_text(self.aeb_url))
-            result["banks"]["АЭБ"] = _parse_aeb_rates(aeb_text)
+            aeb_html = _fetch_text(self.aeb_url)
+            result["banks"]["АЭБ"] = _parse_aeb_rates(aeb_html)
         except Exception:
             result["banks"]["АЭБ"] = {}
 
@@ -177,8 +206,8 @@ class MarketDataService:
 
         result: dict[str, Any] = {"companies": {}}
         try:
-            aos_text = _strip_tags(_fetch_text(self.aosngs_url))
-            result["companies"]["Саханефтегазсбыт"] = _parse_aosngs_prices(aos_text)
+            aos_html = _fetch_text(self.aosngs_url)
+            result["companies"]["Саханефтегазсбыт"] = _parse_aosngs_prices(aos_html)
         except Exception:
             result["companies"]["Саханефтегазсбыт"] = {}
 
