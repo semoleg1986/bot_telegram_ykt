@@ -96,7 +96,11 @@ def register_menu_handlers(
 ) -> None:
     @router.message(Command("menu"))
     async def on_menu(message: types.Message) -> None:
-        sent = await message.reply("Меню управления:", reply_markup=_build_main_menu())
+        sent = await bot.send_message(
+            message.chat.id,
+            "Меню управления:",
+            reply_markup=_build_main_menu(),
+        )
         schedule_delete(bot, sent)
 
     @router.callback_query()
