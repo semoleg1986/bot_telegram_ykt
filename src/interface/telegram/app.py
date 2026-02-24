@@ -7,6 +7,7 @@ from src.application import PolicyStore, ProcessMessage, VpnIssuer
 from .handlers.menu import register_menu_handlers
 from .handlers.messages import register_message_handler
 from .handlers.meta import register_meta_handlers
+from .handlers.service import register_service_handlers
 from .handlers.spam import register_spam_handlers
 from .handlers.vpn import register_vpn_handlers
 
@@ -17,6 +18,7 @@ def build_router(
     context_provider,
     policy_store: PolicyStore,
     vpn_issuer: VpnIssuer,
+    market_data,
     admin_user_ids: set[int],
     required_channel: str | None = None,
     required_channel_link: str | None = None,
@@ -39,11 +41,13 @@ def build_router(
         bot,
         policy_store,
         vpn_issuer,
+        market_data,
         admin_user_ids,
         required_channel=required_channel,
         required_channel_link=required_channel_link,
         required_chat=required_chat,
     )
+    register_service_handlers(router, market_data)
     register_message_handler(
         router,
         bot,

@@ -37,6 +37,11 @@ class Settings:
     outline_cert_sha256: str | None
     vpn_ttl_days: int
     vpn_max_active_keys: int
+    sber_rates_url: str
+    vtb_rates_url: str
+    aeb_rates_url: str
+    aosngs_url: str
+    tuneft_urls: tuple[str, ...]
     keyword_list: tuple[str, ...]
     domain_blacklist: tuple[str, ...]
     domain_whitelist: tuple[str, ...]
@@ -63,6 +68,28 @@ def load_settings() -> Settings:
         outline_cert_sha256=os.getenv("OUTLINE_CERT_SHA256"),
         vpn_ttl_days=int(os.getenv("VPN_TTL_DAYS", "30")),
         vpn_max_active_keys=int(os.getenv("VPN_MAX_ACTIVE_KEYS", "2")),
+        sber_rates_url=os.getenv(
+            "SBER_RATES_URL",
+            "https://bankiros.ru/bank/sberbank/currency",
+        ),
+        vtb_rates_url=os.getenv(
+            "VTB_RATES_URL",
+            "https://bankiros.ru/bank/vtb/currency",
+        ),
+        aeb_rates_url=os.getenv(
+            "AEB_RATES_URL",
+            "https://www.albank.ru/ru/more/info/exchange/",
+        ),
+        aosngs_url=os.getenv("AOSNGS_URL", "https://aosngs.ru/"),
+        tuneft_urls=tuple(
+            u.strip()
+            for u in os.getenv(
+                "TUNEFT_URLS",
+                "https://api.tuneft.ru/api/v1/prices,"
+                "https://api.tuneft.ru/api/v1/prices/export?type=json",
+            ).split(",")
+            if u.strip()
+        ),
         keyword_list=_split_list(os.getenv("SPAM_KEYWORDS")),
         domain_blacklist=_split_list(os.getenv("SPAM_DOMAINS")),
         domain_whitelist=_split_list(os.getenv("ALLOW_DOMAINS")),

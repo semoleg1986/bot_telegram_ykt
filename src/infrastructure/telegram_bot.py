@@ -22,8 +22,11 @@ def build_dispatcher(
     vpn_ttl_days: int = 30,
     vpn_max_active_keys: int = 2,
     required_chat: str | None = None,
+    market_data_urls: dict | None = None,
 ) -> Dispatcher:
-    use_case, context_provider, policy_store, vpn_issuer = build_dependencies(
+    if not market_data_urls:
+        market_data_urls = {}
+    use_case, context_provider, policy_store, vpn_issuer, market = build_dependencies(
         bot=bot,
         policy=policy,
         admin_chat_id=admin_chat_id,
@@ -32,6 +35,11 @@ def build_dispatcher(
         outline_cert_sha256=outline_cert_sha256,
         ttl_days=vpn_ttl_days,
         max_active=vpn_max_active_keys,
+        sber_url=market_data_urls.get("sber_url", ""),
+        vtb_url=market_data_urls.get("vtb_url", ""),
+        aeb_url=market_data_urls.get("aeb_url", ""),
+        aosngs_url=market_data_urls.get("aosngs_url", ""),
+        tuneft_urls=market_data_urls.get("tuneft_urls", ()),
     )
     router = build_router(
         use_case=use_case,
@@ -39,6 +47,7 @@ def build_dispatcher(
         context_provider=context_provider,
         policy_store=policy_store,
         vpn_issuer=vpn_issuer,
+        market_data=market,
         admin_user_ids=set(admin_user_ids),
         required_channel=required_channel,
         required_channel_link=required_channel_link,
@@ -62,6 +71,7 @@ async def run_bot(
     vpn_ttl_days: int = 30,
     vpn_max_active_keys: int = 2,
     required_chat: str | None = None,
+    market_data_urls: dict | None = None,
 ) -> None:
     bot = Bot(token=token)
     dispatcher = build_dispatcher(
@@ -77,6 +87,7 @@ async def run_bot(
         vpn_ttl_days=vpn_ttl_days,
         vpn_max_active_keys=vpn_max_active_keys,
         required_chat=required_chat,
+        market_data_urls=market_data_urls,
     )
 
     await dispatcher.start_polling(bot)
@@ -95,6 +106,7 @@ def run_bot_sync(
     vpn_ttl_days: int = 30,
     vpn_max_active_keys: int = 2,
     required_chat: str | None = None,
+    market_data_urls: dict | None = None,
 ) -> None:
     asyncio.run(
         run_bot(
@@ -110,5 +122,6 @@ def run_bot_sync(
             vpn_ttl_days=vpn_ttl_days,
             vpn_max_active_keys=vpn_max_active_keys,
             required_chat=required_chat,
+            market_data_urls=market_data_urls,
         )
     )

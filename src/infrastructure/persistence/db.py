@@ -70,6 +70,12 @@ class SQLiteDatabase:
                     expires_at INTEGER,
                     revoked_at INTEGER
                 );
+
+                CREATE TABLE IF NOT EXISTS cache (
+                    key TEXT PRIMARY KEY,
+                    value_json TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                );
                 """
             )
             columns = {

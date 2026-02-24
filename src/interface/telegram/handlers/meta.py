@@ -37,6 +37,8 @@ def register_meta_handlers(router: Router, bot: Bot, admin_user_ids: set[int]) -
             "/vpn_revoke <user_id>\n"
             "/vpn_stats\n"
             "/vpn_users\n"
+            "/rates\n"
+            "/fuel\n"
             "/whoami"
         )
         schedule_delete(bot, sent)

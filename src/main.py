@@ -20,6 +20,13 @@ def main() -> None:
         vpn_ttl_days=settings.vpn_ttl_days,
         vpn_max_active_keys=settings.vpn_max_active_keys,
         required_chat=settings.required_chat,
+        market_data_urls={
+            "sber_url": settings.sber_rates_url,
+            "vtb_url": settings.vtb_rates_url,
+            "aeb_url": settings.aeb_rates_url,
+            "aosngs_url": settings.aosngs_url,
+            "tuneft_urls": settings.tuneft_urls,
+        },
     )
 
 

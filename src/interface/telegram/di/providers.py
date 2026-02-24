@@ -10,7 +10,9 @@ from src.infrastructure import (
     InMemoryPolicyStore,
     StubVpnIssuer,
 )
+from src.infrastructure.clients.market_data import MarketDataService
 from src.infrastructure.clients.outline_client import OutlineClient
+from src.infrastructure.persistence.cache import SQLiteCache
 from src.infrastructure.persistence.context_provider import SQLiteContextProvider
 from src.infrastructure.persistence.db import SQLiteDatabase
 from src.infrastructure.persistence.decision_logger import SQLiteDecisionLogger
@@ -28,12 +30,18 @@ def build_dependencies(
     outline_cert_sha256: str | None = None,
     ttl_days: int = 30,
     max_active: int = 2,
-) -> tuple[ProcessMessage, ContextProvider, PolicyStore, VpnIssuer]:
+    sber_url: str = "",
+    vtb_url: str = "",
+    aeb_url: str = "",
+    aosngs_url: str = "",
+    tuneft_urls: tuple[str, ...] = (),
+) -> tuple[ProcessMessage, ContextProvider, PolicyStore, VpnIssuer, MarketDataService]:
     if db_path:
         database = SQLiteDatabase(db_path)
         context_provider = SQLiteContextProvider(database)
         logger = SQLiteDecisionLogger(database)
         policy_store = SQLitePolicyStore(database, initial_policy=policy.normalized())
+        cache = SQLiteCache(database)
         if outline_api_url:
             client = OutlineClient(
                 api_url=outline_api_url, cert_sha256=outline_cert_sha256
@@ -45,11 +53,29 @@ def build_dependencies(
             vpn_issuer = SQLiteVpnIssuer(
                 database, ttl_days=ttl_days, max_active=max_active
             )
+        market = MarketDataService(
+            cache=cache,
+            sber_url=sber_url,
+            vtb_url=vtb_url,
+            aeb_url=aeb_url,
+            aosngs_url=aosngs_url,
+            tuneft_urls=tuneft_urls,
+        )
     else:
         context_provider = InMemoryContextProvider()
         logger = InMemoryDecisionLogger()
         policy_store = InMemoryPolicyStore(policy=policy.normalized())
         vpn_issuer = StubVpnIssuer()
+        memory_db = SQLiteDatabase(":memory:")
+        cache = SQLiteCache(memory_db)
+        market = MarketDataService(
+            cache=cache,
+            sber_url=sber_url,
+            vtb_url=vtb_url,
+            aeb_url=aeb_url,
+            aosngs_url=aosngs_url,
+            tuneft_urls=tuneft_urls,
+        )
     actions = TelegramMessageAction(bot, admin_chat_id=admin_chat_id)
     use_case = ProcessMessage(
         policy_store=policy_store,
@@ -58,4 +84,4 @@ def build_dependencies(
         actions=actions,
         notify_on_delete=True,
     )
-    return use_case, context_provider, policy_store, vpn_issuer
+    return use_case, context_provider, policy_store, vpn_issuer, market

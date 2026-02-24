@@ -21,6 +21,14 @@ def test_load_settings_parses_env(monkeypatch):
     monkeypatch.setenv("OUTLINE_CERT_SHA256", "ABC123")
     monkeypatch.setenv("VPN_TTL_DAYS", "30")
     monkeypatch.setenv("VPN_MAX_ACTIVE_KEYS", "2")
+    monkeypatch.setenv("SBER_RATES_URL", "https://example.com/sber")
+    monkeypatch.setenv("VTB_RATES_URL", "https://example.com/vtb")
+    monkeypatch.setenv("AEB_RATES_URL", "https://example.com/aeb")
+    monkeypatch.setenv("AOSNGS_URL", "https://example.com/aosngs")
+    monkeypatch.setenv(
+        "TUNEFT_URLS",
+        "https://example.com/t1,https://example.com/t2",
+    )
     monkeypatch.setenv("SPAM_KEYWORDS", "one, two")
     monkeypatch.setenv("SPAM_DOMAINS", "bad.example")
     monkeypatch.setenv("ALLOW_DOMAINS", "good.example")
@@ -40,6 +48,11 @@ def test_load_settings_parses_env(monkeypatch):
     assert settings.outline_cert_sha256 == "ABC123"
     assert settings.vpn_ttl_days == 30
     assert settings.vpn_max_active_keys == 2
+    assert settings.sber_rates_url == "https://example.com/sber"
+    assert settings.vtb_rates_url == "https://example.com/vtb"
+    assert settings.aeb_rates_url == "https://example.com/aeb"
+    assert settings.aosngs_url == "https://example.com/aosngs"
+    assert settings.tuneft_urls == ("https://example.com/t1", "https://example.com/t2")
     assert settings.keyword_list == ("one", "two")
     assert settings.domain_blacklist == ("bad.example",)
     assert settings.domain_whitelist == ("good.example",)

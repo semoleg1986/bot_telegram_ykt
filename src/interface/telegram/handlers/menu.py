@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import asyncio
+
 from aiogram import Bot, Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.application import PolicyStore, VpnIssuer
+from src.infrastructure.clients.market_data import MarketDataService
 
 from ..utils import format_policy_summary, is_admin, is_channel_member, schedule_delete
+from .service import _format_fuel_table, _format_rates_table
 
 
 def _build_main_menu() -> InlineKeyboardMarkup:
@@ -68,6 +72,10 @@ def _build_spam_menu() -> InlineKeyboardMarkup:
 
 def _build_service_menu() -> InlineKeyboardMarkup:
     rows = [
+        [
+            InlineKeyboardButton(text="Курсы валют", callback_data="menu:rates"),
+            InlineKeyboardButton(text="Топливо", callback_data="menu:fuel"),
+        ],
         [InlineKeyboardButton(text="Help", callback_data="menu:help")],
         [InlineKeyboardButton(text="Who am I", callback_data="menu:whoami")],
         [InlineKeyboardButton(text="Назад", callback_data="menu:back")],
@@ -80,6 +88,7 @@ def register_menu_handlers(
     bot: Bot,
     policy_store: PolicyStore,
     vpn_issuer: VpnIssuer,
+    market: MarketDataService,
     admin_user_ids: set[int],
     required_channel: str | None = None,
     required_channel_link: str | None = None,
@@ -109,6 +118,8 @@ def register_menu_handlers(
             "menu:vpn_stats",
             "menu:vpn_users",
             "menu:vpn_revoke_by_id",
+            "menu:rates",
+            "menu:fuel",
         }:
             if not query.from_user:
                 return
@@ -226,6 +237,22 @@ def register_menu_handlers(
                 return
             sent = await query.message.reply(
                 "Активные пользователи:\n" + "\n".join(map(str, users))
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:rates":
+            data_rates = await asyncio.to_thread(market.get_rates)
+            sent = await query.message.reply(
+                _format_rates_table(data_rates), parse_mode="Markdown"
+            )
+            schedule_delete(bot, sent)
+            return
+
+        if data == "menu:fuel":
+            data_fuel = await asyncio.to_thread(market.get_fuel)
+            sent = await query.message.reply(
+                _format_fuel_table(data_fuel), parse_mode="Markdown"
             )
             schedule_delete(bot, sent)
             return
