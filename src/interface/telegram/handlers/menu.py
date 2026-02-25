@@ -245,11 +245,15 @@ def register_menu_handlers(
             sent = await bot.send_message(
                 chat_id,
                 "Ваш VLESS профиль (Xray):\n"
-                f"{access_key}\n\n"
+                "```\n"
+                f"{access_key}\n"
+                "```\n"
                 "Инструкция:\n"
                 "1) Установите V2Ray/Xray клиент\n"
-                "2) Импортируйте ссылку vless://\n"
-                "3) Нажмите Connect",
+                "2) Скопируйте ссылку из блока выше\n"
+                "3) В клиенте выберите Import from clipboard\n"
+                "4) Нажмите Connect",
+                parse_mode="Markdown",
             )
             schedule_delete(bot, sent)
             return

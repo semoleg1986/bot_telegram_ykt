@@ -51,11 +51,15 @@ def register_vpn_handlers(
         access_key = await vpn_issuer.issue(message.from_user.id)
         sent = await message.reply(
             "Ваш VLESS профиль (Xray):\n"
-            f"{access_key}\n\n"
+            "```\n"
+            f"{access_key}\n"
+            "```\n"
             "Инструкция:\n"
             "1) Установите V2Ray/Xray клиент\n"
-            "2) Импортируйте ссылку vless://\n"
-            "3) Нажмите Connect"
+            "2) Скопируйте ссылку из блока выше\n"
+            "3) В клиенте выберите Import from clipboard\n"
+            "4) Нажмите Connect",
+            parse_mode="Markdown",
         )
         schedule_delete(bot, sent)
 
