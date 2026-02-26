@@ -136,6 +136,6 @@ def build_dependencies(
         context_provider=context_provider,
         logger=logger,
         actions=actions,
-        notify_on_delete=True,
+        notify_on_delete=False,
     )
     return use_case, context_provider, policy_store, vpn_issuer, outline_issuer, market
