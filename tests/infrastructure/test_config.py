@@ -16,11 +16,6 @@ def test_load_settings_parses_env(monkeypatch):
     monkeypatch.setenv("DB_PATH", "data/test.sqlite3")
     monkeypatch.setenv("REQUIRED_CHANNEL", "@myyakutsk_info")
     monkeypatch.setenv("REQUIRED_CHANNEL_LINK", "https://t.me/myyakutsk_info")
-    monkeypatch.setenv("REQUIRED_CHAT", "@yakutskbaraholka")
-    monkeypatch.setenv("OUTLINE_API_URL", "https://example.com/abc")
-    monkeypatch.setenv("OUTLINE_CERT_SHA256", "ABC123")
-    monkeypatch.setenv("VPN_TTL_DAYS", "30")
-    monkeypatch.setenv("VPN_MAX_ACTIVE_KEYS", "2")
     monkeypatch.setenv("SBER_RATES_URL", "https://example.com/sber")
     monkeypatch.setenv("VTB_RATES_URL", "https://example.com/vtb")
     monkeypatch.setenv("AEB_RATES_URL", "https://example.com/aeb")
@@ -43,11 +38,6 @@ def test_load_settings_parses_env(monkeypatch):
     assert settings.db_path == "data/test.sqlite3"
     assert settings.required_channel == "@myyakutsk_info"
     assert settings.required_channel_link == "https://t.me/myyakutsk_info"
-    assert settings.required_chat == "@yakutskbaraholka"
-    assert settings.outline_api_url == "https://example.com/abc"
-    assert settings.outline_cert_sha256 == "ABC123"
-    assert settings.vpn_ttl_days == 30
-    assert settings.vpn_max_active_keys == 2
     assert settings.sber_rates_url == "https://example.com/sber"
     assert settings.vtb_rates_url == "https://example.com/vtb"
     assert settings.aeb_rates_url == "https://example.com/aeb"

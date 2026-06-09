@@ -61,17 +61,6 @@ class SQLiteDatabase:
                     text TEXT NOT NULL
                 );
 
-                CREATE TABLE IF NOT EXISTS vpn_keys (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER NOT NULL,
-                    access_key TEXT NOT NULL,
-                    provider TEXT NOT NULL,
-                    outline_key_id TEXT,
-                    created_at INTEGER NOT NULL,
-                    expires_at INTEGER,
-                    revoked_at INTEGER
-                );
-
                 CREATE TABLE IF NOT EXISTS cache (
                     key TEXT PRIMARY KEY,
                     value_json TEXT NOT NULL,
@@ -79,63 +68,6 @@ class SQLiteDatabase:
                 );
                 """
             )
-            columns = {
-                row["name"]
-                for row in conn.execute("PRAGMA table_info(vpn_keys)").fetchall()
-            }
-            if "id" not in columns:
-                conn.execute("DROP TABLE IF EXISTS vpn_keys_new")
-                conn.execute(
-                    """
-                    CREATE TABLE vpn_keys_new (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        access_key TEXT NOT NULL,
-                        provider TEXT NOT NULL,
-                        outline_key_id TEXT,
-                        created_at INTEGER NOT NULL,
-                        expires_at INTEGER,
-                        revoked_at INTEGER
-                    )
-                    """
-                )
-                if "outline_key_id" not in columns:
-                    conn.execute(
-                        """
-                        INSERT INTO vpn_keys_new(
-                            user_id, access_key, provider, created_at, revoked_at
-                        )
-                        SELECT user_id, access_key, 'outline', created_at, revoked_at
-                        FROM vpn_keys
-                        """
-                    )
-                else:
-                    conn.execute(
-                        """
-                        INSERT INTO vpn_keys_new(
-                            user_id, access_key, provider, outline_key_id, created_at,
-                            revoked_at
-                        )
-                        SELECT user_id, access_key, 'outline', outline_key_id,
-                               created_at, revoked_at
-                        FROM vpn_keys
-                        """
-                    )
-                conn.execute("DROP TABLE vpn_keys")
-                conn.execute("ALTER TABLE vpn_keys_new RENAME TO vpn_keys")
-            columns = {
-                row["name"]
-                for row in conn.execute("PRAGMA table_info(vpn_keys)").fetchall()
-            }
-            if "provider" not in columns:
-                conn.execute("ALTER TABLE vpn_keys ADD COLUMN provider TEXT")
-                conn.execute(
-                    "UPDATE vpn_keys SET provider='outline' WHERE provider IS NULL"
-                )
-            if "outline_key_id" not in columns:
-                conn.execute("ALTER TABLE vpn_keys ADD COLUMN outline_key_id TEXT")
-            if "expires_at" not in columns:
-                conn.execute("ALTER TABLE vpn_keys ADD COLUMN expires_at INTEGER")
             conn.commit()
         finally:
             conn.close()

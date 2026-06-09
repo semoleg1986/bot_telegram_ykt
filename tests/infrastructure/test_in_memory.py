@@ -7,7 +7,6 @@ from src.infrastructure import (
     InMemoryDecisionLogger,
     InMemoryMessageAction,
     InMemoryPolicyStore,
-    StubVpnIssuer,
 )
 
 
@@ -45,9 +44,3 @@ def test_in_memory_policy_store_updates_policy():
         store.update(lambda p: Policy(keyword_list=p.keyword_list + ("two",)))
     )
     assert updated.keyword_list == ("one", "two")
-
-
-def test_stub_vpn_issuer_returns_key():
-    issuer = StubVpnIssuer()
-    key = asyncio.run(issuer.issue(42))
-    assert "42" in key

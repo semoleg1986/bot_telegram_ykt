@@ -1,9 +1,9 @@
-# Telegram Anti-Spam Bot + VPN
+# Telegram Anti-Spam Bot
 
-Проект Telegram-бота для модерации чатов (удаление спама) и выдачи VPN-доступа пользователям через Xray (VLESS/Reality) и Outline.
+Проект Telegram-бота для модерации чатов: удаление спама, управление правилами, сервисные команды с курсами валют и ценами на топливо.
 
 Документация:
-- `docs/protocol.md` — протокол модерации и выдачи VPN-доступа
+- `docs/protocol.md` — протокол модерации
 
 ## Запуск
 1. Установить зависимости:
@@ -15,22 +15,6 @@
    - `DB_PATH` (опционально, путь к SQLite файлу, по умолчанию `data/bot.sqlite3`)
    - `REQUIRED_CHANNEL` (опционально, канал для обязательной подписки, например `@myyakutsk_info`)
    - `REQUIRED_CHANNEL_LINK` (опционально, ссылка для инструкции, например `https://t.me/myyakutsk_info`)
-   - `REQUIRED_CHAT` (опционально, чат, участникам которого разрешён VPN, например `@yakutskbaraholka`)
-   - `OUTLINE_API_URL` (опционально, `apiUrl` из установщика Outline)
-   - `OUTLINE_CERT_SHA256` (опционально, `certSha256` из установщика Outline)
-   - `XRAY_HOST` (опционально, IP/домен сервера Xray)
-   - `XRAY_PORT` (опционально, порт Xray, например `8443`)
-   - `XRAY_UUID` (опционально, UUID для VLESS)
-   - `XRAY_PUBLIC_KEY` (опционально, public key для Reality)
-   - `XRAY_SNI` (опционально, SNI, например `www.cloudflare.com`)
-   - `XRAY_SHORT_ID` (опционально, short id для Reality)
-   - `XRAY_PROFILE_NAME` (опционально, имя профиля, по умолчанию `Yakutsk VPN`)
-   - `XRAY_FINGERPRINT` (опционально, по умолчанию `chrome`)
-   - `XRAY_ALPN` (опционально, по умолчанию `h2`)
-   - `XRAY_FLOW` (опционально, по умолчанию `xtls-rprx-vision`)
-   - `XRAY_PATH` (опционально, по умолчанию `/`)
-   - `VPN_TTL_DAYS` (опционально, срок ключа в днях, по умолчанию `30`)
-   - `VPN_MAX_ACTIVE_KEYS` (опционально, лимит активных ключей на пользователя, по умолчанию `2`)
    - `SBER_RATES_URL` (опционально, источник курсов Сбер)
    - `VTB_RATES_URL` (опционально, источник курсов ВТБ)
    - `AEB_RATES_URL` (опционально, источник курсов АЭБ)
@@ -48,46 +32,12 @@
 ## Хранение
 По умолчанию используется SQLite (файл `data/bot.sqlite3`). Политики и логи сохраняются между перезапусками.
 
-## Xray (VLESS/Reality)
-Xray выдаётся по команде `/vpn`. Бот формирует ссылку `vless://...` на основе `XRAY_*` переменных.
-
-## Outline (установка, параллельно)
-1. Подключитесь к серверу по SSH.
-2. Запустите официальный инсталлятор:
-   - `sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh)"`
-3. Сохраните выведенные значения `apiUrl` и `certSha256`.
-4. Вставьте их в `.env`:
-   - `OUTLINE_API_URL=...`
-   - `OUTLINE_CERT_SHA256=...`
-5. Перезапустите бота/контейнер.
-
-## Как пользоваться VPN (для пользователей)
-Xray:
-1. Напишите боту `/vpn`.
-2. Получите ссылку `vless://...`.
-3. Установите V2Ray/Xray клиент и импортируйте ссылку.
-
-Outline:
-1. Напишите боту `/outline`.
-2. Получите ключ доступа.
-3. Установите приложение Outline и импортируйте ключ.
-
 ## Команды бота
 - `/spam_add keyword <слово>` — добавить ключевое слово в blacklist
 - `/spam_add domain <домен>` — добавить домен в blacklist
 - `/spam_remove keyword <слово>` — удалить ключевое слово
 - `/spam_remove domain <домен>` — удалить домен
 - `/spam_stats` — показать текущую политику
-- `/vpn` — получить Xray профиль (VLESS/Reality)
-- `/vpn_revoke` — отозвать свой ключ
-- `/vpn_revoke <user_id>` — отозвать ключ пользователя (только админ)
-- `/vpn_stats` — статистика выдачи ключей (только админ)
-- `/vpn_users` — список активных пользователей (только админ)
-- `/outline` — получить Outline ключ
-- `/outline_revoke` — отозвать свой ключ (Outline)
-- `/outline_revoke <user_id>` — отозвать ключ пользователя (Outline, только админ)
-- `/outline_stats` — статистика выдачи ключей (Outline, только админ)
-- `/outline_users` — список активных пользователей (Outline, только админ)
 - `/rates` — курсы USD/EUR/CNY (Сбер, ВТБ, АЭБ)
 - `/fuel` — цены на топливо (АИ-92/95/ДТ)
 - `/menu` — показать меню с кнопками

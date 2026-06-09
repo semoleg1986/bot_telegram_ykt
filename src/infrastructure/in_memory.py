@@ -8,7 +8,6 @@ from src.application import (
     LogEntry,
     MessageAction,
     PolicyStore,
-    VpnIssuer,
 )
 from src.domain import Policy
 
@@ -60,19 +59,3 @@ class InMemoryPolicyStore(PolicyStore):
     async def update(self, updater) -> Policy:
         self.policy = updater(self.policy)
         return self.policy
-
-
-@dataclass
-class StubVpnIssuer(VpnIssuer):
-    async def issue(self, user_id: int) -> str:
-        return f"OUTLINE_ACCESS_KEY_FOR_{user_id}"
-
-    async def revoke(self, user_id: int) -> None:
-        _ = user_id
-
-    async def stats(self) -> dict[str, int]:
-        return {"total": 0, "active": 0, "revoked": 0}
-
-    async def active_users(self, limit: int = 100) -> list[int]:
-        _ = limit
-        return []

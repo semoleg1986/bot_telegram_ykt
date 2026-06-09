@@ -4,7 +4,6 @@ from .interfaces import (
     LogEntry,
     MessageAction,
     PolicyStore,
-    VpnIssuer,
 )
 from .use_cases import ProcessMessage, ProcessMessageResult
 
@@ -14,7 +13,6 @@ __all__ = [
     "LogEntry",
     "MessageAction",
     "PolicyStore",
-    "VpnIssuer",
     "ProcessMessage",
     "ProcessMessageResult",
 ]
